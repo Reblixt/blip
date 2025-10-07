@@ -4,20 +4,34 @@ pragma solidity ^0.8.30;
 // Swish alternative
 contract Blip {
 
-    // En lagrad variabel som kontraktet kommer ihåg
+    constructor() {
+    paymentStatus = PaymentStatus.Idle;
+}
+
+    enum PaymentStatus { Idle, Pending, Approved, Rejected }
+    PaymentStatus public paymentStatus;
+
     address public recipientAddress;
     address public senderAddress;
-    address[] public guardians;
     uint public amount;
+
+    address[] public guardians;
+    mapping (address => bool) public guardiansMap;
+    mapping (address => bool) approvedGuardians;
 
     //Init
 
     function initPayment() external payable {
-        require(senderAddress == address(0), "Payment already initialized");
+        require(paymentStatus == PaymentStatus.Idle, "Payment already active");
         require(msg.value > 0, "0 is not a valid payment amount");
+
+        for (uint i = 0; i < guardians.length; i++) {
+            approvedGuardians[guardians[i]] = false; // Börja med ej godkänt
+        }
 
         senderAddress = msg.sender;
         amount = msg.value;
+        paymentStatus = PaymentStatus.Pending;
     }
 
     function setRecipient() external {
@@ -27,74 +41,159 @@ contract Blip {
         recipientAddress = msg.sender;
         // event-logga att mottagaren har uppdaterats
     }
-    
 
-    function setGuardians (address[] memory newGuardians) external {
-        // Mottagaren kan ange vilka adresser som får godkänna betalningar:
-        // Bra mottagaren kan sätta listan
-        require(msg.sender == recipientAddress, "Only the recipient can set the guardians");
-        // Minst en signer ska vara i listan
-        require(newGuardians.length > 0, "Guardians list cannot be empty");
-        // Om det finns guardians, kolla att ingen betalning pågår
+    function addGuardian(address newGuardian) external {
+        // Endast mottagaren kan ändra
+        require(msg.sender == recipientAddress, "Only the recipient can add guardians");
+        // Redan guardian
+        require(!guardiansMap[newGuardian], "Guardian already in list");
+        // Inga uppdateringar under aktiv betalning (escrow måste vara stilla)
+        require(paymentStatus != PaymentStatus.Pending, "Cannot change guardians during payment");
+        // sätt i mapping
+        guardiansMap[newGuardian] = true;
+        // lägg till i arrayen
+        guardians.push(newGuardian);
+        // initiera approval
+        approvedGuardians[newGuardian] = false;
 
-        // Sätt listan
-        guardians = newGuardians;
-       // event-logga att mottagaren har uppdaterat listan
+        // event-logga att mottagaren har uppdaterat listan
+        
     }
 
-    function updateGuardians() external {
-        // Behövs den här verkligen?
+    function removeGuardian(address oldGuardian) external {
+        // Endast mottagaren kan ändra
+        require(msg.sender == recipientAddress, "Only the recipient can add guardians");
+        // Redan guardian
+        require(guardiansMap[oldGuardian], "Guardian not in list");
+                // Inga uppdateringar under aktiv betalning (escrow måste vara stilla)
+        require(paymentStatus != PaymentStatus.Pending, "Cannot change guardians during payment");
+        // Ta bort från mapping
+        guardiansMap[oldGuardian] = false;
+        // Ta bort från approval
+        approvedGuardians[oldGuardian] = false;
+
+        // Remove from array
+        removeFromArray(oldGuardian)  
+
+        // event-logga att mottagaren har uppdaterat listan
+        
     }
+
+    function removeFromArray(address guardian) internal {
+    for (uint i = 0; i < guardians.length; i++) {
+        if (guardians[i] == guardian) {
+            guardians[i] = guardians[guardians.length - 1]; // byt med sista
+            guardians.pop(); // ta bort sista
+            break;
+        }
+    }
+}
 
     // Transaktioner
 
     function sendPayment() external {
-       // Avsändaren skickar pengar in i kontraktet
-        // Pengarna hålls tills signers godkänner betalningen
-
+        // Avsändaren skickar pengar in i kontraktet
+        
         // Kontrollera att mottagaren är satt
 
-        // Kontrollera att guardians är satta
-
-        // Kontrollera att ingen betalning pågår
+        // Kontrollera att guardians finns
 
         // Pengarna går från avsändaren till kontraktet
+
+        // Pengarna hålls tills signers godkänner betalningen
 
         // Skicka event-logg
     }
 
     function refundPayment() external {
-        // Returnerar pengar till avsändaren
-        // Kan ske om signers avvisar eller timeout inträffar
+
+        // Kontrollera att betalningen faktiskt är Pending eller Rejected
+
+        // Skicka pengarna tillbaka till avsändaren
+
+        // Nollställ variablerna så att kontraktet är redo för nästa betalning
+
+        // Uppdatera betalningsstatus
+
+        // Event-logga att betalningen har skickats tillbaka
+
     }
 
     function releasePayment() external {
-             // Släpper pengarna till mottagarens smart wallet
-        // Endast om tillräckligt många signers har godkänt   
+        // Kontrollera att betalningen är Pending
+
+        // Kontrollera om tillräckligt många guardians har godkänt
+
+        // Skicka pengarna till mottagaren
+
+        // Uppdatera betalningsstatus
+
+        // Event-logga att betalningen har släppts
+
     }
 
     // Signers
 
     function approvePayment() external {
-        // En signer godkänner betalningen
+       // Kontrollera att avsändaren är en guardian
+        require(guardiansMap[msg.sender], "Signer is not a valid guardian");
+
+        // Kontrollera att betalningen är pending
+        require(paymentStatus == PaymentStatus.Pending, "Payment is not pending");
+
+        // Kontrollera att guardian inte redan godkänt
+        require(!approvedGuardians[msg.sender], "Signer has already approved");
+
+        // Lägg till guardian i listan över godkända guardians
+        // Bör vara mapping
+        approvedGuardians[msg.sender] = true;
+        
+        // Event-logga att personen har godkännt
+
+        // Kontrollera om tillräckligt många har godkänt
+        if (getSignerStatus() == PaymentStatus.Approved) {
+            paymentStatus = PaymentStatus.Approved;
+
+        // Event-logga att betalningen har godkännts
+
     }
+}
 
     function rejectPayment() external {
-         // En signer avvisar betalningen
+         // Kontrollera att personen som anropar är en guardian
+         require(guardiansMap[msg.sender], "Signer is not a valid guardian");
+
+         // Kontrollera att betalningen är Pending
+         require(paymentStatus == PaymentStatus.Pending, "Payment is not pending");
+
+         // Sätt betalningsstatus till rejected
+         paymentStatus = PaymentStatus.Rejected;
+
+         // Skicka tillbaka pengarna till avsändaren
+         refundPayment();
+
+         // Event-logga att betalningen har avvisats
+
     }
 
-    function getSignerStatus() external {
+    function getSignerStatus() public view returns (PaymentStatus){
         // Returnerar om tillräckligt många signers har godkänt
         // Kan returnera status: pending, approved, rejected
-    }
+        if (guardians.length == 0) return PaymentStatus.Idle;
 
-    // Säkerhet
-    function isValidSigner() external {
-        // Kontrollera att den som signerar är en definierad guardian
-    }
+        uint approvedCount = 0;
+        for (uint i = 0; i < guardians.length; i++) {
+            if (approvedGuardians[guardians[i]]) {
+                approvedCount++;
+            }
+        }
 
-    function getPaymentStatus() external {
-        // Returnerar status: pending, approved, rejected
+        if (approvedCount == guardians.length && guardians.length > 0) { // Alla guardians måste godkänt
+            return PaymentStatus.Approved;
+        }
+
+
+        return PaymentStatus.Pending;
     }
 
     function handleDirectTransfer() external {
