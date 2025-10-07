@@ -178,7 +178,6 @@ contract Blip {
 
     function getSignerStatus() public view returns (PaymentStatus){
         // Returnerar om tillräckligt många signers har godkänt
-        // Kan returnera status: pending, approved, rejected
         if (guardians.length == 0) return PaymentStatus.Idle;
 
         uint approvedCount = 0;
