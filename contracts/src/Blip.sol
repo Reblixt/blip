@@ -35,13 +35,15 @@ contract Blip {
         require(msg.sender == recipientAddress, "Only the recipient can set the guardians");
         // Minst en signer ska vara i listan
         require(newGuardians.length > 0, "Guardians list cannot be empty");
+        // Om det finns guardians, kolla att ingen betalning pågår
+
         // Sätt listan
         guardians = newGuardians;
        // event-logga att mottagaren har uppdaterat listan
     }
 
     function updateGuardians() external {
-        // Mottagaren kan uppdatera listan med nya signers
+        // Behövs den här verkligen?
     }
 
     // Transaktioner
@@ -49,6 +51,16 @@ contract Blip {
     function sendPayment() external {
        // Avsändaren skickar pengar in i kontraktet
         // Pengarna hålls tills signers godkänner betalningen
+
+        // Kontrollera att mottagaren är satt
+
+        // Kontrollera att guardians är satta
+
+        // Kontrollera att ingen betalning pågår
+
+        // Pengarna går från avsändaren till kontraktet
+
+        // Skicka event-logg
     }
 
     function refundPayment() external {
