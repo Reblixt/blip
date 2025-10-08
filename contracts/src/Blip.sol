@@ -22,7 +22,11 @@ contract Blip {
     //Init
 
     function initPayment() external payable {
+        // Minst en guardian behöver vara satt
+        require(guardians.length > 0, "No guardians set");
+        // Inga uppdateringar under aktiv betalning
         require(paymentStatus == PaymentStatus.Idle, "Payment already active");
+        // 0 är inte giltigt belopp
         require(msg.value > 0, "0 is not a valid payment amount");
 
         for (uint i = 0; i < guardians.length; i++) {
@@ -65,15 +69,14 @@ contract Blip {
         require(msg.sender == recipientAddress, "Only the recipient can add guardians");
         // Redan guardian
         require(guardiansMap[oldGuardian], "Guardian not in list");
-                // Inga uppdateringar under aktiv betalning (escrow måste vara stilla)
+        // Inga uppdateringar under aktiv betalning (escrow måste vara stilla)
         require(paymentStatus != PaymentStatus.Pending, "Cannot change guardians during payment");
         // Ta bort från mapping
         guardiansMap[oldGuardian] = false;
         // Ta bort från approval
         approvedGuardians[oldGuardian] = false;
-
         // Remove from array
-        removeFromArray(oldGuardian)  
+        removeFromArray(oldGuardian);  
 
         // event-logga att mottagaren har uppdaterat listan
         
@@ -91,43 +94,42 @@ contract Blip {
 
     // Transaktioner
 
-    function sendPayment() external {
-        // Avsändaren skickar pengar in i kontraktet
-        
-        // Kontrollera att mottagaren är satt
-
-        // Kontrollera att guardians finns
-
-        // Pengarna går från avsändaren till kontraktet
-
-        // Pengarna hålls tills signers godkänner betalningen
-
-        // Skicka event-logg
-    }
-
-    function refundPayment() external {
+    function refundPayment() public {
 
         // Kontrollera att betalningen faktiskt är Pending eller Rejected
+        require(paymentStatus == PaymentStatus.Pending || paymentStatus == PaymentStatus.Rejected, "Payment is not pending or rejected");
 
         // Skicka pengarna tillbaka till avsändaren
+        payable(senderAddress).transfer(amount);
 
-        // Nollställ variablerna så att kontraktet är redo för nästa betalning
+        // Nollställ inför nästa betalning
+        amount = 0;
+        senderAddress = address(0);
 
         // Uppdatera betalningsstatus
+        paymentStatus = PaymentStatus.Idle;
 
         // Event-logga att betalningen har skickats tillbaka
 
     }
 
-    function releasePayment() external {
-        // Kontrollera att betalningen är Pending
+    function releasePayment() public {
+        // Kontrollera att betalningen är Approved
+        require(paymentStatus == PaymentStatus.Approved, "Payment is not approved");
 
-        // Kontrollera om tillräckligt många guardians har godkänt
+        // Har kontraktet tillräckligt med pengar?
+        require(address(this).balance >= amount, "Insufficient contract balance");
 
         // Skicka pengarna till mottagaren
+        payable(recipientAddress).transfer(amount);
+
+        // Nollställ inför nästa betalning
+        amount = 0;
+        senderAddress = address(0);
 
         // Uppdatera betalningsstatus
-
+        paymentStatus = PaymentStatus.Idle;
+        
         // Event-logga att betalningen har släppts
 
     }
@@ -150,14 +152,17 @@ contract Blip {
         
         // Event-logga att personen har godkännt
 
-        // Kontrollera om tillräckligt många har godkänt
+        // Om tillräckligt många har godkänt
         if (getSignerStatus() == PaymentStatus.Approved) {
+        // Sätt betalningsstatus till approved
             paymentStatus = PaymentStatus.Approved;
+        // Skicka ut pengarna
+            releasePayment();
+        }
 
         // Event-logga att betalningen har godkännts
 
     }
-}
 
     function rejectPayment() external {
          // Kontrollera att personen som anropar är en guardian
@@ -196,7 +201,9 @@ contract Blip {
     }
 
     function handleDirectTransfer() external {
-        // Avsändaren skickar pengar in i kontraktet
+        // Om avsändaren skickar pengar in i kontraktet...
         // Fallback??
     }
 }
+
+
