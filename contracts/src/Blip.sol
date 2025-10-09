@@ -8,13 +8,25 @@ contract Blip {
     paymentStatus = PaymentStatus.Idle;
 }
 
+    event RecipientSet(address recipientAddress);
+    event GuardianAdded(address recipientAddress, address guardianAddress);
+    event GuardianRemoved(address recipientAddress, address guardianAddress);
+
+    event PaymentInitiated(address senderAddress, uint amount);
+    event PaymentSigned(address signerAddress, uint amount);
+    event PaymentRejected(address signerAddress, uint amount);
+    event PaymentRefunded(address senderAddress, uint amount);
+    event PaymentReleased(address recipientAddress, uint amount);
+
+
     enum PaymentStatus { Idle, Pending, Approved, Rejected }
+
     PaymentStatus public paymentStatus;
 
     address public recipientAddress;
     address public senderAddress;
     uint public amount;
-
+    
     address[] public guardians;
     mapping (address => bool) public guardiansMap;
     mapping (address => bool) approvedGuardians;
@@ -36,6 +48,9 @@ contract Blip {
         senderAddress = msg.sender;
         amount = msg.value;
         paymentStatus = PaymentStatus.Pending;
+
+        // Event-logg
+        emit PaymentInitiated(msg.sender, msg.value);
     }
 
     function setRecipient() external {
@@ -44,6 +59,7 @@ contract Blip {
         // Sätt mottagaren
         recipientAddress = msg.sender;
         // event-logga att mottagaren har uppdaterats
+        emit RecipientSet(msg.sender);
     }
 
     function addGuardian(address newGuardian) external {
@@ -61,6 +77,7 @@ contract Blip {
         approvedGuardians[newGuardian] = false;
 
         // event-logga att mottagaren har uppdaterat listan
+        emit GuardianAdded(msg.sender, newGuardian);
         
     }
 
@@ -79,6 +96,7 @@ contract Blip {
         removeFromArray(oldGuardian);  
 
         // event-logga att mottagaren har uppdaterat listan
+        emit GuardianRemoved(msg.sender, oldGuardian);
         
     }
 
@@ -99,8 +117,11 @@ contract Blip {
         // Kontrollera att betalningen faktiskt är Pending eller Rejected
         require(paymentStatus == PaymentStatus.Pending || paymentStatus == PaymentStatus.Rejected, "Payment is not pending or rejected");
 
+        // spara värdet till event
+        uint refundAmount = amount;
+
         // Skicka pengarna tillbaka till avsändaren
-        payable(senderAddress).transfer(amount);
+        payable(senderAddress).transfer(refundAmount);
 
         // Nollställ inför nästa betalning
         amount = 0;
@@ -110,6 +131,7 @@ contract Blip {
         paymentStatus = PaymentStatus.Idle;
 
         // Event-logga att betalningen har skickats tillbaka
+        emit PaymentRefunded(senderAddress, refundAmount);
 
     }
 
@@ -120,8 +142,11 @@ contract Blip {
         // Har kontraktet tillräckligt med pengar?
         require(address(this).balance >= amount, "Insufficient contract balance");
 
+        // spara värdet till event
+        uint paymentAmount = amount;
+
         // Skicka pengarna till mottagaren
-        payable(recipientAddress).transfer(amount);
+        payable(recipientAddress).transfer(paymentAmount);
 
         // Nollställ inför nästa betalning
         amount = 0;
@@ -131,6 +156,7 @@ contract Blip {
         paymentStatus = PaymentStatus.Idle;
         
         // Event-logga att betalningen har släppts
+        emit PaymentReleased(recipientAddress, paymentAmount);
 
     }
 
@@ -145,6 +171,9 @@ contract Blip {
 
         // Kontrollera att guardian inte redan godkänt
         require(!approvedGuardians[msg.sender], "Signer has already approved");
+
+        // spara värdet till event
+        uint paymentAmount = amount;
 
         // Lägg till guardian i listan över godkända guardians
         // Bör vara mapping
@@ -161,6 +190,7 @@ contract Blip {
         }
 
         // Event-logga att betalningen har godkännts
+        emit PaymentSigned(msg.sender, paymentAmount);
 
     }
 
@@ -171,6 +201,8 @@ contract Blip {
          // Kontrollera att betalningen är Pending
          require(paymentStatus == PaymentStatus.Pending, "Payment is not pending");
 
+         uint paymentAmount = amount;
+
          // Sätt betalningsstatus till rejected
          paymentStatus = PaymentStatus.Rejected;
 
@@ -178,6 +210,7 @@ contract Blip {
          refundPayment();
 
          // Event-logga att betalningen har avvisats
+         emit PaymentRejected(msg.sender, paymentAmount);
 
     }
 
@@ -200,9 +233,12 @@ contract Blip {
         return PaymentStatus.Pending;
     }
 
-    function handleDirectTransfer() external {
-        // Om avsändaren skickar pengar in i kontraktet...
-        // Fallback??
+    receive() external payable {
+        revert("Direct payments not allowed");
+    }
+
+    fallback() external payable {
+        revert("Direct transfers not allowed");
     }
 }
 
