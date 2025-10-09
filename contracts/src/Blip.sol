@@ -7,7 +7,10 @@ import {IERC20} from "forge-std/interfaces/IERC20.sol";
 contract Blip {
     constructor() {
         paymentStatus = PaymentStatus.Idle;
+        recipientAddress = msg.sender;
     }
+
+    error NoGuardian();
 
     enum PaymentStatus {
         Idle,
@@ -17,14 +20,25 @@ contract Blip {
     }
     PaymentStatus public paymentStatus;
 
+    struct Payment {
+        uint256 id;
+        address sender;
+        PaymentStatus status;
+        uint amount;
+        mapping(address => bool) approvedBy;
+    }
+
     address public recipientAddress;
     address public senderAddress;
     uint public amount;
+    uint256 public paymentId;
     IERC20 public usdc = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48); // USDC contract on Ethereum mainnet
 
     address[] public guardians;
+    mapping(uint id => Payment) public payments;
     mapping(address => bool) public guardiansMap;
-    mapping(address => bool) approvedGuardians;
+
+    // mapping(address => bool) approvedGuardians;
 
     //Init
 
@@ -45,13 +59,13 @@ contract Blip {
         paymentStatus = PaymentStatus.Pending;
     }
 
-    function setRecipient() external {
-        // Mottagaren kan bara göra detta en gång
-        require(recipientAddress == address(0), "Recipient wallet already set");
-        // Sätt mottagaren
-        recipientAddress = msg.sender;
-        // event-logga att mottagaren har uppdaterats
-    }
+    // function setRecipient() external {
+    //     // Mottagaren kan bara göra detta en gång
+    //     require(recipientAddress == address(0), "Recipient wallet already set");
+    //     // Sätt mottagaren
+    //     recipientAddress = msg.sender;
+    //     // event-logga att mottagaren har uppdaterats
+    // }
 
     function addGuardian(address newGuardian) external {
         // Endast mottagaren kan ändra
