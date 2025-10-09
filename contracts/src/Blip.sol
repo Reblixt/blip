@@ -1,15 +1,16 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.30;
 
-import {IERC20} from "forge-std/interfaces/IERC20.sol";
+// import {IERC20} from "forge-std/interfaces/IERC20.sol";
 
 // Swish alternative
 contract Blip {
     constructor() {
     paymentStatus = PaymentStatus.Idle;
+    recipientAddress = msg.sender;
 }
 
-    event RecipientSet(address recipientAddress);
+    // event RecipientSet(address recipientAddress);
     event GuardianAdded(address recipientAddress, address guardianAddress);
     event GuardianRemoved(address recipientAddress, address guardianAddress);
 
@@ -19,30 +20,25 @@ contract Blip {
     event PaymentRefunded(address senderAddress, uint amount);
     event PaymentReleased(address recipientAddress, uint amount);
 
-
     enum PaymentStatus { Idle, Pending, Approved, Rejected }
-
     PaymentStatus public paymentStatus;
 
-    struct Payment {
-        uint256 id;
-        address sender;
-        PaymentStatus status;
-        uint amount;
-        mapping(address => bool) approvedBy;
-    }
+    // struct Payment {
+    //     uint256 id;
+    //     address sender;
+    //     PaymentStatus status;
+    //     uint amount;
+    //     mapping(address => bool) approvedBy;
+    // }
 
     address public recipientAddress;
     address public senderAddress;
     uint public amount;
-    uint256 public paymentId;
-    IERC20 public usdc = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48); // USDC contract on Ethereum mainnet
 
     address[] public guardians;
-    mapping(uint id => Payment) public payments;
+    // mapping(uint id => Payment) public payments;
     mapping(address => bool) public guardiansMap;
-
-    // mapping(address => bool) approvedGuardians;
+    mapping(address => bool) approvedGuardians;
 
     //Init
 
@@ -54,10 +50,6 @@ contract Blip {
         // 0 är inte giltigt belopp
         require(msg.value > 0, "0 is not a valid payment amount");
 
-        for (uint i = 0; i < guardians.length; i++) {
-            approvedGuardians[guardians[i]] = false; // Börja med ej godkänt
-        }
-
         senderAddress = msg.sender;
         amount = msg.value;
         paymentStatus = PaymentStatus.Pending;
@@ -66,28 +58,13 @@ contract Blip {
         emit PaymentInitiated(msg.sender, msg.value);
     }
 
-    function setRecipient() external {
-        // Mottagaren kan bara göra detta en gång
-        require(recipientAddress == address(0), "Recipient wallet already set");
-        // Sätt mottagaren
-        recipientAddress = msg.sender;
-        // event-logga att mottagaren har uppdaterats
-        emit RecipientSet(msg.sender);
-    }
-
     function addGuardian(address newGuardian) external {
         // Endast mottagaren kan ändra
-        require(
-            msg.sender == recipientAddress,
-            "Only the recipient can add guardians"
-        );
+        require(msg.sender == recipientAddress, "Only the recipient can add guardians");
         // Redan guardian
         require(!guardiansMap[newGuardian], "Guardian already in list");
         // Inga uppdateringar under aktiv betalning (escrow måste vara stilla)
-        require(
-            paymentStatus != PaymentStatus.Pending,
-            "Cannot change guardians during payment"
-        );
+        require(paymentStatus != PaymentStatus.Pending, "Cannot change guardians during payment");
         // sätt i mapping
         guardiansMap[newGuardian] = true;
         // lägg till i arrayen
@@ -100,30 +77,23 @@ contract Blip {
         
     }
 
-    function removeGuardian(address oldGuardian) external {
+        function removeGuardian(address oldGuardian) external {
         // Endast mottagaren kan ändra
-        require(
-            msg.sender == recipientAddress,
-            "Only the recipient can add guardians"
-        );
+        require(msg.sender == recipientAddress, "Only the recipient can add guardians");
         // Redan guardian
         require(guardiansMap[oldGuardian], "Guardian not in list");
         // Inga uppdateringar under aktiv betalning (escrow måste vara stilla)
-        require(
-            paymentStatus != PaymentStatus.Pending,
-            "Cannot change guardians during payment"
-        );
+        require(paymentStatus != PaymentStatus.Pending, "Cannot change guardians during payment");
         // Ta bort från mapping
         guardiansMap[oldGuardian] = false;
         // Ta bort från approval
         approvedGuardians[oldGuardian] = false;
         // Remove from array
-        removeFromArray(oldGuardian);
-
+        removeFromArray(oldGuardian);  
         // event-logga att mottagaren har uppdaterat listan
-        emit GuardianRemoved(msg.sender, oldGuardian);
-        
+        emit GuardianRemoved(msg.sender, oldGuardian); 
     }
+        
 
     function removeFromArray(address guardian) internal {
         for (uint i = 0; i < guardians.length; i++) {
@@ -141,11 +111,11 @@ contract Blip {
         // Kontrollera att betalningen faktiskt är Pending eller Rejected
         require(paymentStatus == PaymentStatus.Pending || paymentStatus == PaymentStatus.Rejected, "Payment is not pending or rejected");
 
-        // spara värdet till event
         uint refundAmount = amount;
+        address refundTo = senderAddress; // spara till event
 
         // Skicka pengarna tillbaka till avsändaren
-        payable(senderAddress).transfer(refundAmount);
+        payable(refundTo).transfer(refundAmount);
 
         // Nollställ inför nästa betalning
         amount = 0;
@@ -155,7 +125,13 @@ contract Blip {
         paymentStatus = PaymentStatus.Idle;
 
         // Event-logga att betalningen har skickats tillbaka
-        emit PaymentRefunded(senderAddress, refundAmount);
+        emit PaymentRefunded(refundTo, refundAmount);
+
+        // Nollställ guardians
+        for (uint i = 0; i < guardians.length; i++) {
+        approvedGuardians[guardians[i]] = false;
+        }
+
 
     }
 
@@ -169,11 +145,11 @@ contract Blip {
         // Har kontraktet tillräckligt med pengar?
         require(address(this).balance >= amount, "Insufficient contract balance");
 
-        // spara värdet till event
         uint paymentAmount = amount;
+        address recipient = recipientAddress;
 
         // Skicka pengarna till mottagaren
-        payable(recipientAddress).transfer(paymentAmount);
+        payable(recipient).transfer(paymentAmount);
 
         // Nollställ inför nästa betalning
         amount = 0;
@@ -183,9 +159,15 @@ contract Blip {
         paymentStatus = PaymentStatus.Idle;
 
         // Event-logga att betalningen har släppts
-        emit PaymentReleased(recipientAddress, paymentAmount);
+        emit PaymentReleased(recipient, paymentAmount);
+
+        // Nollställ guardians
+        for (uint i = 0; i < guardians.length; i++) {
+        approvedGuardians[guardians[i]] = false;
+        }
 
     }
+
 
     // Signers
 
@@ -208,8 +190,6 @@ contract Blip {
         // Lägg till guardian i listan över godkända guardians
         // Bör vara mapping
         approvedGuardians[msg.sender] = true;
-
-        // Event-logga att personen har godkännt
 
         // Om tillräckligt många har godkänt
         if (getSignerStatus() == PaymentStatus.Approved) {
