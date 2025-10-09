@@ -12,23 +12,21 @@ contract CounterTest is Test {
 
     function setUp() public {
         counter = new Blip();
-
-        counter.setNumber(0);
     }
 
-    function test_Increment() public {
-        address sender = msg.sender;
-        console.log("signer", sender);
-        vm.startPrank(Alice);
-        console.log("signer", msg.sender);
-        counter.increment();
-        vm.stopPrank();
-        assertEq(counter.number(), 1);
-    }
-
-    function testFuzz_SetNumber(uint256 x) public {
-        counter.setNumber(x);
-        counter.increment();
-        assertEq(counter.number(), x);
-    }
+    // function test_Increment() public {
+    //     address sender = msg.sender;
+    //     console.log("signer", sender);
+    //     vm.startPrank(Alice);
+    //     console.log("signer", msg.sender);
+    //     counter.increment();
+    //     vm.stopPrank();
+    //     assertEq(counter.number(), 1);
+    // }
+    //
+    // function testFuzz_SetNumber(uint256 x) public {
+    //     counter.setNumber(x);
+    //     counter.increment();
+    //     assertEq(counter.number(), x);
+    // }
 }

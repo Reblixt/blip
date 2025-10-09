@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.30;
 
+import {IERC20} from "forge-std/interfaces/IERC20.sol";
+
 // Swish alternative
 contract Blip {
-
     constructor() {
     paymentStatus = PaymentStatus.Idle;
 }
@@ -23,13 +24,25 @@ contract Blip {
 
     PaymentStatus public paymentStatus;
 
+    struct Payment {
+        uint256 id;
+        address sender;
+        PaymentStatus status;
+        uint amount;
+        mapping(address => bool) approvedBy;
+    }
+
     address public recipientAddress;
     address public senderAddress;
     uint public amount;
-    
+    uint256 public paymentId;
+    IERC20 public usdc = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48); // USDC contract on Ethereum mainnet
+
     address[] public guardians;
-    mapping (address => bool) public guardiansMap;
-    mapping (address => bool) approvedGuardians;
+    mapping(uint id => Payment) public payments;
+    mapping(address => bool) public guardiansMap;
+
+    // mapping(address => bool) approvedGuardians;
 
     //Init
 
@@ -64,11 +77,17 @@ contract Blip {
 
     function addGuardian(address newGuardian) external {
         // Endast mottagaren kan ändra
-        require(msg.sender == recipientAddress, "Only the recipient can add guardians");
+        require(
+            msg.sender == recipientAddress,
+            "Only the recipient can add guardians"
+        );
         // Redan guardian
         require(!guardiansMap[newGuardian], "Guardian already in list");
         // Inga uppdateringar under aktiv betalning (escrow måste vara stilla)
-        require(paymentStatus != PaymentStatus.Pending, "Cannot change guardians during payment");
+        require(
+            paymentStatus != PaymentStatus.Pending,
+            "Cannot change guardians during payment"
+        );
         // sätt i mapping
         guardiansMap[newGuardian] = true;
         // lägg till i arrayen
@@ -83,17 +102,23 @@ contract Blip {
 
     function removeGuardian(address oldGuardian) external {
         // Endast mottagaren kan ändra
-        require(msg.sender == recipientAddress, "Only the recipient can add guardians");
+        require(
+            msg.sender == recipientAddress,
+            "Only the recipient can add guardians"
+        );
         // Redan guardian
         require(guardiansMap[oldGuardian], "Guardian not in list");
         // Inga uppdateringar under aktiv betalning (escrow måste vara stilla)
-        require(paymentStatus != PaymentStatus.Pending, "Cannot change guardians during payment");
+        require(
+            paymentStatus != PaymentStatus.Pending,
+            "Cannot change guardians during payment"
+        );
         // Ta bort från mapping
         guardiansMap[oldGuardian] = false;
         // Ta bort från approval
         approvedGuardians[oldGuardian] = false;
         // Remove from array
-        removeFromArray(oldGuardian);  
+        removeFromArray(oldGuardian);
 
         // event-logga att mottagaren har uppdaterat listan
         emit GuardianRemoved(msg.sender, oldGuardian);
@@ -101,19 +126,18 @@ contract Blip {
     }
 
     function removeFromArray(address guardian) internal {
-    for (uint i = 0; i < guardians.length; i++) {
-        if (guardians[i] == guardian) {
-            guardians[i] = guardians[guardians.length - 1]; // byt med sista
-            guardians.pop(); // ta bort sista
-            break;
+        for (uint i = 0; i < guardians.length; i++) {
+            if (guardians[i] == guardian) {
+                guardians[i] = guardians[guardians.length - 1]; // byt med sista
+                guardians.pop(); // ta bort sista
+                break;
+            }
         }
     }
-}
 
     // Transaktioner
 
     function refundPayment() public {
-
         // Kontrollera att betalningen faktiskt är Pending eller Rejected
         require(paymentStatus == PaymentStatus.Pending || paymentStatus == PaymentStatus.Rejected, "Payment is not pending or rejected");
 
@@ -137,7 +161,10 @@ contract Blip {
 
     function releasePayment() public {
         // Kontrollera att betalningen är Approved
-        require(paymentStatus == PaymentStatus.Approved, "Payment is not approved");
+        require(
+            paymentStatus == PaymentStatus.Approved,
+            "Payment is not approved"
+        );
 
         // Har kontraktet tillräckligt med pengar?
         require(address(this).balance >= amount, "Insufficient contract balance");
@@ -154,7 +181,7 @@ contract Blip {
 
         // Uppdatera betalningsstatus
         paymentStatus = PaymentStatus.Idle;
-        
+
         // Event-logga att betalningen har släppts
         emit PaymentReleased(recipientAddress, paymentAmount);
 
@@ -163,11 +190,14 @@ contract Blip {
     // Signers
 
     function approvePayment() external {
-       // Kontrollera att avsändaren är en guardian
+        // Kontrollera att avsändaren är en guardian
         require(guardiansMap[msg.sender], "Signer is not a valid guardian");
 
         // Kontrollera att betalningen är pending
-        require(paymentStatus == PaymentStatus.Pending, "Payment is not pending");
+        require(
+            paymentStatus == PaymentStatus.Pending,
+            "Payment is not pending"
+        );
 
         // Kontrollera att guardian inte redan godkänt
         require(!approvedGuardians[msg.sender], "Signer has already approved");
@@ -178,14 +208,14 @@ contract Blip {
         // Lägg till guardian i listan över godkända guardians
         // Bör vara mapping
         approvedGuardians[msg.sender] = true;
-        
+
         // Event-logga att personen har godkännt
 
         // Om tillräckligt många har godkänt
         if (getSignerStatus() == PaymentStatus.Approved) {
-        // Sätt betalningsstatus till approved
+            // Sätt betalningsstatus till approved
             paymentStatus = PaymentStatus.Approved;
-        // Skicka ut pengarna
+            // Skicka ut pengarna
             releasePayment();
         }
 
@@ -195,26 +225,26 @@ contract Blip {
     }
 
     function rejectPayment() external {
-         // Kontrollera att personen som anropar är en guardian
-         require(guardiansMap[msg.sender], "Signer is not a valid guardian");
+        // Kontrollera att personen som anropar är en guardian
+        require(guardiansMap[msg.sender], "Signer is not a valid guardian");
 
          // Kontrollera att betalningen är Pending
          require(paymentStatus == PaymentStatus.Pending, "Payment is not pending");
 
          uint paymentAmount = amount;
 
-         // Sätt betalningsstatus till rejected
-         paymentStatus = PaymentStatus.Rejected;
+        // Sätt betalningsstatus till rejected
+        paymentStatus = PaymentStatus.Rejected;
 
-         // Skicka tillbaka pengarna till avsändaren
-         refundPayment();
+        // Skicka tillbaka pengarna till avsändaren
+        refundPayment();
 
          // Event-logga att betalningen har avvisats
          emit PaymentRejected(msg.sender, paymentAmount);
 
     }
 
-    function getSignerStatus() public view returns (PaymentStatus){
+    function getSignerStatus() public view returns (PaymentStatus) {
         // Returnerar om tillräckligt många signers har godkänt
         if (guardians.length == 0) return PaymentStatus.Idle;
 
@@ -225,10 +255,10 @@ contract Blip {
             }
         }
 
-        if (approvedCount == guardians.length && guardians.length > 0) { // Alla guardians måste godkänt
+        if (approvedCount == guardians.length && guardians.length > 0) {
+            // Alla guardians måste godkänt
             return PaymentStatus.Approved;
         }
-
 
         return PaymentStatus.Pending;
     }
@@ -241,5 +271,3 @@ contract Blip {
         revert("Direct transfers not allowed");
     }
 }
-
-
