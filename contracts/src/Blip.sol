@@ -33,7 +33,7 @@ contract Blip {
     event PaymentRefunded(address senderAddress, uint amount);
     event PaymentReleased(address recipientAddress, uint amount);
 
-    enum PaymentStatus { Idle, Pending, SentBack, Approved, Rejected, Completed }
+    enum PaymentStatus { Pending, SentBack, Approved, Rejected, Completed }
 
     struct Payment {
         uint256 id;
@@ -249,9 +249,6 @@ contract Blip {
     }
 
     function getSignerStatus(uint256 _paymentId) public view returns (PaymentStatus) {
-        // Returnerar om tillräckligt många signers har godkänt
-        if (guardians.length == 0) return PaymentStatus.Idle;
-
         uint approvedCount = 0;
         for (uint i = 0; i < guardians.length; i++) {
             if (payments[_paymentId].approvedBy[guardians[i]]) {
