@@ -1,13 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-// import {IERC20} from "forge-std/interfaces/IERC20.sol";
+import {IERC20} from "forge-std/interfaces/IERC20.sol";
+// import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 // Swish alternative
 contract Blip {
 
-    constructor() {
+    constructor(address _tokenAddress) {
     recipientAddress = msg.sender;
+    token = IERC20(_tokenAddress);
     }
 
     modifier onlyRecipient() {
@@ -51,12 +53,16 @@ contract Blip {
         uint256 amount;
         string message;
         uint256 timestamp;
-        PaymentStatus status; 
+        PaymentStatus status;
+        uint256 guardianCount;
         mapping(address => bool) approvedBy;
+        mapping(address => bool) requiredApprovals;
     }
 
     mapping(uint256 => Payment) public payments;
     uint256 public paymentCounter = 1;
+
+    IERC20 public token;
 
     address public recipientAddress;
 
@@ -81,6 +87,12 @@ contract Blip {
     newPayment.message = _message;
     newPayment.timestamp = block.timestamp;
     newPayment.status = PaymentStatus.Pending;
+
+    for (uint i = 0; i < guardians.length; i++) {
+        newPayment.requiredApprovals[guardians[i]] = true;
+    }
+
+    newPayment.guardianCount = guardians.length;
     
     paymentCounter++;
 
@@ -156,8 +168,6 @@ contract Blip {
     }
 
     function approvePayment(uint256 _paymentId) external onlyGuardian {
-        // Kontrollera att avsändaren är en guardian
-
         // Kontrollera att betalningen är pending
         require(
             payments[_paymentId].status == PaymentStatus.Pending,
@@ -166,6 +176,11 @@ contract Blip {
 
         // Kontrollera att guardian inte redan godkänt
         require(!payments[_paymentId].approvedBy[msg.sender], SignerAlreadyApproved());
+
+        require(
+            payments[_paymentId].requiredApprovals[msg.sender] == true,
+            NotASigner()
+            );
 
         // spara värdet till event
         uint paymentAmount = payments[_paymentId].amount;
@@ -253,14 +268,16 @@ contract Blip {
 
     function getSignerStatus(uint256 _paymentId) public view returns (PaymentStatus) {
         // Returnerar om tillräckligt många signers har godkänt
+
         uint approvedCount = 0;
         for (uint i = 0; i < guardians.length; i++) {
-            if (payments[_paymentId].approvedBy[guardians[i]]) {
+            // räknas både är required och har godkänt
+            if (payments[_paymentId].approvedBy[guardians[i]] && payments[_paymentId].requiredApprovals[guardians[i]]) {
                 approvedCount++;
             }
         }
 
-        if (approvedCount == guardians.length) {
+        if (approvedCount == payments[_paymentId].guardianCount) {
             // Alla guardians måste godkänt
             return PaymentStatus.Approved;
         }
