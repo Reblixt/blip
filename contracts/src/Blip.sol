@@ -54,9 +54,9 @@ contract Blip {
         string message;
         uint256 timestamp;
         PaymentStatus status;
-        uint256 guardianCount;
-        mapping(address => bool) approvedBy;
-        mapping(address => bool) requiredApprovals;
+        uint256 guardianCount; // Hur många behövs
+        mapping(address => bool) approvedBy; // Vem har godkänt
+        mapping(address => bool) requiredApprovals; // Vem får godkänna
     }
 
     mapping(uint256 => Payment) public payments;
@@ -177,6 +177,7 @@ contract Blip {
         // Kontrollera att guardian inte redan godkänt
         require(!payments[_paymentId].approvedBy[msg.sender], SignerAlreadyApproved());
 
+        // Var guardian när betalning skapades?
         require(
             payments[_paymentId].requiredApprovals[msg.sender] == true,
             NotASigner()
@@ -233,11 +234,16 @@ contract Blip {
     function rejectPayment(uint256 _paymentId) external onlyGuardian {
         // Kontrollera att personen som anropar är en guardian
 
-
         // Kontrollera att betalningen är Pending
         require(
             payments[_paymentId].status == PaymentStatus.Pending,
             PaymentNotPending()
+            );
+
+        // Var guardian när betalning skapades?
+        require(
+            payments[_paymentId].requiredApprovals[msg.sender] == true,
+            NotASigner()
             );
 
         uint paymentAmount = payments[_paymentId].amount;
