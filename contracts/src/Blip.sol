@@ -5,18 +5,27 @@ pragma solidity ^0.8.30;
 
 // Swish alternative
 contract Blip {
+
     constructor() {
     recipientAddress = msg.sender;
-}
+    }
+
+    modifier onlyRecipient() {
+        require(msg.sender == recipientAddress, NotRecipient());
+        _;
+    }
+
+    modifier onlyGuardian() {
+        require(guardiansMap[msg.sender], NotASigner());
+        _;
+    }
 
     // errors
     error NoGuardiansSet();
-    error PaymentAlreadyActive();
     error InvalidAmount();
     error InsufficientContractBalance();
     error NotRecipient();
     error GuardianAlreadyExist();
-    error CannotChangeGuardiansDuringPayment();
     error NotASigner();
     error PaymentNotPending();
     error PaymentNotApproved();
@@ -93,9 +102,7 @@ contract Blip {
     //     paymentCounter++;
     // }
 
-    function addGuardian(address newGuardian) external {
-        // Endast mottagaren kan ändra
-        require(msg.sender == recipientAddress, NotRecipient());
+    function addGuardian(address newGuardian) external onlyRecipient {
         // Redan guardian
         require(!guardiansMap[newGuardian], GuardianAlreadyExist());
         // sätt i mapping
@@ -106,9 +113,7 @@ contract Blip {
         emit GuardianAdded(msg.sender, newGuardian);  
     }
 
-        function removeGuardian(address oldGuardian) external {
-        // Endast mottagaren kan ändra
-        require(msg.sender == recipientAddress, NotRecipient());
+        function removeGuardian(address oldGuardian) external onlyRecipient {
         // Redan guardian
         require(guardiansMap[oldGuardian], GuardianAlreadyExist());
         // Ta bort från mapping
@@ -150,9 +155,8 @@ contract Blip {
 
     }
 
-    function approvePayment(uint256 _paymentId) external {
+    function approvePayment(uint256 _paymentId) external onlyGuardian {
         // Kontrollera att avsändaren är en guardian
-        require(guardiansMap[msg.sender], NotASigner());
 
         // Kontrollera att betalningen är pending
         require(
@@ -183,7 +187,7 @@ contract Blip {
     }
 
     
-    function releasePayment(uint256 _paymentId) public {
+    function releasePayment(uint256 _paymentId) internal {
         // Kontrollera att betalningen är Approved
         require(
             payments[_paymentId].status == PaymentStatus.Approved,
@@ -211,9 +215,9 @@ contract Blip {
 
     }
 
-    function rejectPayment(uint256 _paymentId) external {
+    function rejectPayment(uint256 _paymentId) external onlyGuardian {
         // Kontrollera att personen som anropar är en guardian
-        require(guardiansMap[msg.sender], NotASigner());
+
 
         // Kontrollera att betalningen är Pending
         require(
@@ -231,7 +235,6 @@ contract Blip {
 
          // Event-logga att betalningen har avvisats
          emit PaymentRejected(msg.sender, paymentAmount);
-
     }
 
     function getPayment(uint256 _id) external view returns ( 
@@ -249,6 +252,7 @@ contract Blip {
     }
 
     function getSignerStatus(uint256 _paymentId) public view returns (PaymentStatus) {
+        // Returnerar om tillräckligt många signers har godkänt
         uint approvedCount = 0;
         for (uint i = 0; i < guardians.length; i++) {
             if (payments[_paymentId].approvedBy[guardians[i]]) {
@@ -256,7 +260,7 @@ contract Blip {
             }
         }
 
-        if (approvedCount == guardians.length && guardians.length > 0) {
+        if (approvedCount == guardians.length) {
             // Alla guardians måste godkänt
             return PaymentStatus.Approved;
         }
