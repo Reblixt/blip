@@ -28,6 +28,8 @@ contract Blip {
     error InsufficientContractBalance();
     error NotRecipient();
     error GuardianAlreadyExist();
+    error GuardianAlreadyPending();
+    error GuardianNotPending();
     error NotASigner();
     error PaymentNotPending();
     error PaymentNotApproved();
@@ -35,7 +37,10 @@ contract Blip {
     error DirectPaymentsNotAllowed();
 
     // event RecipientSet(address recipientAddress);
+    event GuardianProposed(address indexed recipient, address indexed proposedGuardian);
     event GuardianAdded(address recipientAddress, address guardianAddress);
+    event GuardianDeclinedRole(address indexed recipient, address indexed guardian);
+    event GuardianProposalCancelled(address indexed recipient, address indexed guardian);
     event GuardianRemoved(address recipientAddress, address guardianAddress);
 
     event PaymentInitiated(address senderAddress, uint amount);
@@ -68,6 +73,7 @@ contract Blip {
 
     address[] public guardians;
     mapping(address => bool) public guardiansMap;
+    mapping(address => bool) public pendingGuardians;
 
     //Init
 
@@ -114,18 +120,50 @@ contract Blip {
     //     paymentCounter++;
     // }
 
-    function addGuardian(address newGuardian) external onlyRecipient {
-        // Redan guardian
+    function proposeGuardian(address newGuardian) external onlyRecipient {
+        // Redan aktiv guardian
         require(!guardiansMap[newGuardian], GuardianAlreadyExist());
-        // sätt i mapping
-        guardiansMap[newGuardian] = true;
-        // lägg till i arrayen
-        guardians.push(newGuardian);
-        // event-logga att mottagaren har uppdaterat listan
-        emit GuardianAdded(msg.sender, newGuardian);  
+        // Redan pending guardian
+        require(!pendingGuardians[newGuardian], GuardianAlreadyPending());
+        // Sätt som pending
+        pendingGuardians[newGuardian] = true;
+        
+        emit GuardianProposed(msg.sender, newGuardian);
     }
 
-        function removeGuardian(address oldGuardian) external onlyRecipient {
+    function cancelGuardianProposal(address newGuardian) external onlyRecipient {
+        // är guardian markerad som pending?
+        require(pendingGuardians[newGuardian], GuardianNotPending());
+
+        // Ta bort från mapping
+        pendingGuardians[newGuardian] = false;
+
+        emit GuardianProposalCancelled(recipientAddress, newGuardian);
+    }
+
+    function acceptGuardianRole() external {
+        // är msg.sender markerad som pending?
+        require(pendingGuardians[msg.sender], GuardianNotPending());
+         // Ta bort från pending-mapping
+        pendingGuardians[msg.sender] = false;
+        // sätt i mapping
+        guardiansMap[msg.sender] = true;
+        // lägg till i arrayen
+        guardians.push(msg.sender);
+
+        emit GuardianAdded(recipientAddress, msg.sender);  
+    }
+
+    function declineGuardianRole() external {
+        // är msg.sender markerad som pending?
+        require(pendingGuardians[msg.sender], GuardianNotPending());
+        // Ta bort från pending-mapping
+        pendingGuardians[msg.sender] = false;
+
+        emit GuardianDeclinedRole(recipientAddress, msg.sender);
+    }
+
+    function removeGuardian(address oldGuardian) external onlyRecipient {
         // Redan guardian
         require(guardiansMap[oldGuardian], GuardianAlreadyExist());
         // Ta bort från mapping
