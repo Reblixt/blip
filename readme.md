@@ -1,0 +1,1 @@
+- Ska guardians få lov att göra en transaktion och godkänna samma transaktion?

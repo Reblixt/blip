@@ -17,16 +17,13 @@ contract Blip {
         _;
     }
 
-    modifier onlyGuardian() {
-        require(guardiansMap[msg.sender], NotASigner());
-        _;
-    }
-
     // errors
     error NoGuardiansSet();
     error InvalidAmount();
     error InsufficientContractBalance();
+    error InvalidAddress();
     error NotRecipient();
+    error RecipientCannotBeGuardian();
     error GuardianAlreadyExist();
     error GuardianAlreadyPending();
     error GuardianNotPending();
@@ -60,12 +57,13 @@ contract Blip {
         uint256 timestamp;
         PaymentStatus status;
         uint256 guardianCount; // Hur många behövs
+        uint256 approvalCount; // Hur många har godkänt hittills
         mapping(address => bool) approvedBy; // Vem har godkänt
         mapping(address => bool) requiredApprovals; // Vem får godkänna
     }
 
     mapping(uint256 => Payment) public payments;
-    uint256 public paymentCounter = 1;
+    uint256 public paymentCounter = 0;
 
     IERC20 public token;
 
@@ -99,6 +97,7 @@ contract Blip {
     }
 
     newPayment.guardianCount = guardians.length;
+    newPayment.approvalCount = 1;
     
     paymentCounter++;
 
@@ -121,6 +120,10 @@ contract Blip {
     // }
 
     function proposeGuardian(address newGuardian) external onlyRecipient {
+        // Ogiltig address
+        require(newGuardian != address(0), InvalidAddress());
+        // Recipient kan inte vara guardian
+        require(newGuardian != recipientAddress, RecipientCannotBeGuardian());  // Vilket error?
         // Redan aktiv guardian
         require(!guardiansMap[newGuardian], GuardianAlreadyExist());
         // Redan pending guardian
@@ -142,7 +145,7 @@ contract Blip {
     }
 
     function acceptGuardianRole() external {
-        // är msg.sender markerad som pending?
+        // är msg.sender markerad som pending guardian?
         require(pendingGuardians[msg.sender], GuardianNotPending());
          // Ta bort från pending-mapping
         pendingGuardians[msg.sender] = false;
@@ -155,7 +158,7 @@ contract Blip {
     }
 
     function declineGuardianRole() external {
-        // är msg.sender markerad som pending?
+        // är msg.sender markerad som pending guardian?
         require(pendingGuardians[msg.sender], GuardianNotPending());
         // Ta bort från pending-mapping
         pendingGuardians[msg.sender] = false;
@@ -187,25 +190,7 @@ contract Blip {
 
     // Transaktioner
 
-    function refundPayment(uint256 _paymentId) public {
-        // Kontrollera att betalningen faktiskt är Pending eller Rejected
-        require(payments[_paymentId].status == PaymentStatus.Pending || payments[_paymentId].status == PaymentStatus.Rejected, PaymentNotPending());
-
-        uint refundAmount = payments[_paymentId].amount;
-        address refundTo = payments[_paymentId].sender; // spara till event
-
-        // Skicka pengarna tillbaka till avsändaren
-        payable(refundTo).transfer(refundAmount);
-
-        // Uppdatera betalningsstatus
-        payments[_paymentId].status = PaymentStatus.SentBack;
-
-        // Event-logga att betalningen har skickats tillbaka
-        emit PaymentRefunded(refundTo, refundAmount);
-
-    }
-
-    function approvePayment(uint256 _paymentId) external onlyGuardian {
+        function approvePayment(uint256 _paymentId) external {
         // Kontrollera att betalningen är pending
         require(
             payments[_paymentId].status == PaymentStatus.Pending,
@@ -224,11 +209,14 @@ contract Blip {
         // spara värdet till event
         uint paymentAmount = payments[_paymentId].amount;
 
-        // Lägg till guardian i listan över godkända guardians
+        // Markera som godkänd
         payments[_paymentId].approvedBy[msg.sender] = true;
 
+        // Räkna uppåt
+        payments[_paymentId].approvalCount++;
+
         // Om tillräckligt många har godkänt
-        if (getSignerStatus(_paymentId) == PaymentStatus.Approved) {
+        if (payments[_paymentId].approvalCount == payments[_paymentId].guardianCount) {
             // Sätt betalningsstatus till approved
             payments[_paymentId].status = PaymentStatus.Approved;
             // Skicka ut pengarna
@@ -269,7 +257,35 @@ contract Blip {
 
     }
 
-    function rejectPayment(uint256 _paymentId) external onlyGuardian {
+    function cancelPendingPayment(uint256 _paymentId) external onlyRecipient {
+        // Kontroll: Är betalningen Pending?
+        require(
+            payments[_paymentId].status == PaymentStatus.Pending,
+            PaymentNotPending()
+        );
+        // Anropa internal helper
+        refundPayment(_paymentId);
+    }
+
+    function refundPayment(uint256 _paymentId) internal {
+        // Kontrollera att betalningen faktiskt är Pending eller Rejected
+        require(payments[_paymentId].status == PaymentStatus.Pending || payments[_paymentId].status == PaymentStatus.Rejected, PaymentNotPending());
+
+        uint refundAmount = payments[_paymentId].amount;
+        address refundTo = payments[_paymentId].sender; // spara till event
+
+        // Skicka pengarna tillbaka till avsändaren
+        payable(refundTo).transfer(refundAmount);
+
+        // Uppdatera betalningsstatus
+        payments[_paymentId].status = PaymentStatus.SentBack;
+
+        // Event-logga att betalningen har skickats tillbaka
+        emit PaymentRefunded(refundTo, refundAmount);
+
+    }
+
+    function rejectPayment(uint256 _paymentId) external {
         // Kontrollera att personen som anropar är en guardian
 
         // Kontrollera att betalningen är Pending
@@ -308,25 +324,6 @@ contract Blip {
             payments[_id].timestamp,
             payments[_id].status
             );
-    }
-
-    function getSignerStatus(uint256 _paymentId) public view returns (PaymentStatus) {
-        // Returnerar om tillräckligt många signers har godkänt
-
-        uint approvedCount = 0;
-        for (uint i = 0; i < guardians.length; i++) {
-            // räknas både är required och har godkänt
-            if (payments[_paymentId].approvedBy[guardians[i]] && payments[_paymentId].requiredApprovals[guardians[i]]) {
-                approvedCount++;
-            }
-        }
-
-        if (approvedCount == payments[_paymentId].guardianCount) {
-            // Alla guardians måste godkänt
-            return PaymentStatus.Approved;
-        }
-
-        return PaymentStatus.Pending;
     }
 
     receive() external payable {
