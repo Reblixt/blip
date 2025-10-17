@@ -75,6 +75,9 @@ contract Blip {
 
     //Init
 
+    // Guardians tar bort sig själva
+
+
     function initPayment(string memory _message) external payable {
     // Minst en guardian behöver vara satt
     if (guardians.length == 0) revert NoGuardiansSet();
@@ -83,7 +86,7 @@ contract Blip {
     // Hämta referens till betalningen i storage
     Payment storage newPayment = payments[paymentCounter];
     
-    // Sätt varje fält individuellt
+    // Varje fält individuellt
     newPayment.id = paymentCounter;
     newPayment.sender = msg.sender;
     newPayment.receiver = recipientAddress;
