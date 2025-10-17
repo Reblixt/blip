@@ -25,6 +25,7 @@ contract Blip {
     error NotRecipient();
     error RecipientCannotBeGuardian();
     error GuardianAlreadyExist();
+    error GuardianDoesNotExist();
     error GuardianAlreadyPending();
     error GuardianNotPending();
     error NotASigner();
@@ -37,6 +38,7 @@ contract Blip {
     event GuardianProposed(address indexed recipient, address indexed proposedGuardian);
     event GuardianAdded(address recipientAddress, address guardianAddress);
     event GuardianDeclinedRole(address indexed recipient, address indexed guardian);
+    event GuardianLeftRole(address indexed recipient, address indexed guardian);
     event GuardianProposalCancelled(address indexed recipient, address indexed guardian);
     event GuardianRemoved(address recipientAddress, address guardianAddress);
 
@@ -167,6 +169,17 @@ contract Blip {
         pendingGuardians[msg.sender] = false;
 
         emit GuardianDeclinedRole(recipientAddress, msg.sender);
+    }
+
+    function leaveGuardianRole() external {
+          // Redan aktiv guardian
+        require(guardiansMap[msg.sender], GuardianDoesNotExist());
+            // Ta bort från mapping
+        guardiansMap[msg.sender] = false;
+        // Ta bort från array
+        removeFromArray(msg.sender); 
+
+        emit GuardianLeftRole(recipientAddress, msg.sender);
     }
 
     function removeGuardian(address oldGuardian) external onlyRecipient {
