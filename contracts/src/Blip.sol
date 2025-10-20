@@ -81,81 +81,49 @@ contract Blip {
 
 
     function initPayment(string memory _message) external payable {
-    // // Minst en guardian behöver vara satt
-    if (guardians.length == 0) revert NoGuardiansSet();
     // 0 är inte giltigt belopp
     if (msg.value == 0) revert InvalidAmount();
-    // Hämta referens till betalningen i storage
-    Payment storage newPayment = payments[paymentCounter];
-    
-    // Varje fält individuellt
-    newPayment.id = paymentCounter;
-    newPayment.sender = msg.sender;
-    newPayment.receiver = recipientAddress;
-    newPayment.amount = msg.value;
-    newPayment.message = _message;
-    newPayment.timestamp = block.timestamp;
-    newPayment.status = PaymentStatus.Pending;
 
-    for (uint i = 0; i < guardians.length; i++) {
-        newPayment.requiredApprovals[guardians[i]] = true;
+    //Anropa helper
+    _createPayment(address(0), msg.value, _message);
     }
 
-    newPayment.guardianCount = guardians.length;
-    newPayment.approvalCount = 1;
-    
-    paymentCounter++;
+    function initPayment(address _tokenAddress, uint256 _amount, string memory _message) external {
+        // 0 är inte giltigt belopp
+        if (_amount == 0) revert InvalidAmount();
 
-    // Event-logg
-    emit PaymentInitiated(msg.sender, msg.value);
-}
-
-function initPayment(address _tokenAddress, uint256 _amount, string memory _message) external {
-    // Minst en guardian behöver vara satt
-    if (guardians.length == 0) revert NoGuardiansSet();
-    // 0 är inte giltigt belopp
-    if (_amount == 0) revert InvalidAmount();
-    // Hämta referens till betalningen i storage
-    Payment storage newPayment = payments[paymentCounter];
-
-    // Varje fält individuellt
-    newPayment.id = paymentCounter;
-    newPayment.sender = msg.sender;
-    newPayment.tokenAddress = _tokenAddress;
-    newPayment.receiver = recipientAddress;
-    newPayment.amount = _amount;
-    newPayment.message = _message;
-    newPayment.timestamp = block.timestamp;
-    newPayment.status = PaymentStatus.Pending;
-
-    for (uint i = 0; i < guardians.length; i++) {
-        newPayment.requiredApprovals[guardians[i]] = true;
-    }
-
-    newPayment.guardianCount = guardians.length;
-    newPayment.approvalCount = 1;
-
-    IERC20(_tokenAddress).transferFrom(msg.sender, address(this), _amount); 
-    
-    paymentCounter++;
-
-    // Event-logg
-    emit PaymentInitiated(msg.sender, _amount);
-}
-
-    // function initPayment(string memory _message) external payable {
+        IERC20(_tokenAddress).transferFrom(msg.sender, address(this), _amount); 
         
-    //     payments[paymentCounter] = Payment(
-    //         paymentCounter,
-    //         msg.sender,
-    //         recipientAddress,
-    //         msg.value,
-    //         _message,
-    //         block.timestamp,
-    //         PaymentStatus.Pending
-    //     );
-    //     paymentCounter++;
-    // }
+        _createPayment(_tokenAddress, _amount, _message);
+    }
+
+    function _createPayment(address _tokenAddress, uint256 _amount, string memory _message) internal {
+        // Minst en guardian behöver vara satt
+        if (guardians.length == 0) revert NoGuardiansSet();
+        // Hämta referens till betalningen i storage
+        Payment storage newPayment = payments[paymentCounter];
+        newPayment.id = paymentCounter;
+        newPayment.sender = msg.sender;
+        newPayment.tokenAddress = _tokenAddress;
+        newPayment.receiver = recipientAddress;
+        newPayment.amount = _amount;
+        newPayment.message = _message;
+        newPayment.timestamp = block.timestamp;
+        newPayment.status = PaymentStatus.Pending;
+
+        for (uint i = 0; i < guardians.length; i++) {
+        newPayment.requiredApprovals[guardians[i]] = true;
+        }
+
+        newPayment.guardianCount = guardians.length;
+        newPayment.approvalCount = 1;
+    
+        paymentCounter++;
+
+        // Event-logg
+        emit PaymentInitiated(msg.sender, _amount);
+    
+    }
 
     function proposeGuardian(address newGuardian) external onlyRecipient {
         // Ogiltig address
