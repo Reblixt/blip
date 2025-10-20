@@ -35,7 +35,7 @@ contract Blip {
 
     // event RecipientSet(address recipientAddress);
     event GuardianProposed(address indexed recipient, address indexed proposedGuardian);
-    event GuardianAdded(address recipientAddress, address guardianAddress);
+    event GuardianAdded(address indexed recipientAddress, address indexed guardianAddress);
     event GuardianDeclinedRole(address indexed recipient, address indexed guardian);
     event GuardianLeftRole(address indexed recipient, address indexed guardian);
     event GuardianProposalCancelled(address indexed recipient, address indexed guardian);
@@ -67,8 +67,6 @@ contract Blip {
     mapping(uint256 => Payment) public payments;
     uint256 public paymentCounter = 0;
 
-    IERC20 public token;
-
     address public recipientAddress;
 
     address[] public guardians;
@@ -81,6 +79,8 @@ contract Blip {
 
 
     function initPayment(string memory _message) external payable {
+    // Minst en guardian behöver vara satt
+    if (guardians.length == 0) revert NoGuardiansSet();
     // 0 är inte giltigt belopp
     if (msg.value == 0) revert InvalidAmount();
 
@@ -89,17 +89,19 @@ contract Blip {
     }
 
     function initPayment(address _tokenAddress, uint256 _amount, string memory _message) external {
-        // 0 är inte giltigt belopp
-        if (_amount == 0) revert InvalidAmount();
+    // Minst en guardian behöver vara satt
+    if (guardians.length == 0) revert NoGuardiansSet();
+    // 0 är inte giltigt belopp
+    if (_amount == 0) revert InvalidAmount();
+    // 0-address ej gilting
+    if (_tokenAddress == address(0)) revert InvalidAddress();
 
-        IERC20(_tokenAddress).transferFrom(msg.sender, address(this), _amount); 
+    IERC20(_tokenAddress).transferFrom(msg.sender, address(this), _amount); 
         
-        _createPayment(_tokenAddress, _amount, _message);
+    _createPayment(_tokenAddress, _amount, _message);
     }
 
     function _createPayment(address _tokenAddress, uint256 _amount, string memory _message) internal {
-        // Minst en guardian behöver vara satt
-        if (guardians.length == 0) revert NoGuardiansSet();
         // Hämta referens till betalningen i storage
         Payment storage newPayment = payments[paymentCounter];
         newPayment.id = paymentCounter;
@@ -116,7 +118,7 @@ contract Blip {
         }
 
         newPayment.guardianCount = guardians.length;
-        newPayment.approvalCount = 1;
+        newPayment.approvalCount = 0;
     
         paymentCounter++;
 
@@ -174,9 +176,9 @@ contract Blip {
     }
 
     function leaveGuardianRole() external {
-          // Redan aktiv guardian
+        // Redan aktiv guardian
         require(guardiansMap[msg.sender], GuardianDoesNotExist());
-            // Ta bort från mapping
+        // Ta bort från mapping
         guardiansMap[msg.sender] = false;
         // Ta bort från array
         removeFromArray(msg.sender); 
@@ -186,7 +188,7 @@ contract Blip {
 
     function removeGuardian(address oldGuardian) external onlyRecipient {
         // Redan guardian
-        require(guardiansMap[oldGuardian], GuardianAlreadyExist());
+        require(guardiansMap[oldGuardian], GuardianDoesNotExist());
         // Ta bort från mapping
         guardiansMap[oldGuardian] = false;
         // Ta bort från array
