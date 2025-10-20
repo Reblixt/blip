@@ -7,9 +7,8 @@ import {IERC20} from "forge-std/interfaces/IERC20.sol";
 // Swish alternative
 contract Blip {
 
-    constructor(address _tokenAddress) {
+    constructor() {
     recipientAddress = msg.sender;
-    token = IERC20(_tokenAddress);
     }
 
     modifier onlyRecipient() {
@@ -54,6 +53,7 @@ contract Blip {
         uint256 id;
         address sender;
         address receiver;
+        address tokenAddress;
         uint256 amount;
         string message;
         uint256 timestamp;
@@ -81,7 +81,7 @@ contract Blip {
 
 
     function initPayment(string memory _message) external payable {
-    // Minst en guardian behöver vara satt
+    // // Minst en guardian behöver vara satt
     if (guardians.length == 0) revert NoGuardiansSet();
     // 0 är inte giltigt belopp
     if (msg.value == 0) revert InvalidAmount();
@@ -110,6 +110,39 @@ contract Blip {
     emit PaymentInitiated(msg.sender, msg.value);
 }
 
+function initPayment(address _tokenAddress, uint256 _amount, string memory _message) external {
+    // Minst en guardian behöver vara satt
+    if (guardians.length == 0) revert NoGuardiansSet();
+    // 0 är inte giltigt belopp
+    if (_amount == 0) revert InvalidAmount();
+    // Hämta referens till betalningen i storage
+    Payment storage newPayment = payments[paymentCounter];
+
+    // Varje fält individuellt
+    newPayment.id = paymentCounter;
+    newPayment.sender = msg.sender;
+    newPayment.tokenAddress = _tokenAddress;
+    newPayment.receiver = recipientAddress;
+    newPayment.amount = _amount;
+    newPayment.message = _message;
+    newPayment.timestamp = block.timestamp;
+    newPayment.status = PaymentStatus.Pending;
+
+    for (uint i = 0; i < guardians.length; i++) {
+        newPayment.requiredApprovals[guardians[i]] = true;
+    }
+
+    newPayment.guardianCount = guardians.length;
+    newPayment.approvalCount = 1;
+
+    IERC20(_tokenAddress).transferFrom(msg.sender, address(this), _amount); 
+    
+    paymentCounter++;
+
+    // Event-logg
+    emit PaymentInitiated(msg.sender, _amount);
+}
+
     // function initPayment(string memory _message) external payable {
         
     //     payments[paymentCounter] = Payment(
@@ -135,6 +168,7 @@ contract Blip {
         require(!pendingGuardians[newGuardian], GuardianAlreadyPending());
         // Sätt som pending
         pendingGuardians[newGuardian] = true;
+        
         
         emit GuardianProposed(msg.sender, newGuardian);
     }
@@ -252,14 +286,25 @@ contract Blip {
             PaymentNotApproved()
         );
 
-        // Har kontraktet tillräckligt med pengar?
-        require(address(this).balance >= payments[_paymentId].amount, InsufficientContractBalance());
-
+        address tokenAddress = payments[_paymentId].tokenAddress;
         uint paymentAmount = payments[_paymentId].amount;
         address recipient = payments[_paymentId].receiver;
 
         // Skicka pengarna till mottagaren
-        payable(recipient).transfer(paymentAmount);
+        // Native token
+        if(tokenAddress == address(0) ) {
+             // Har kontraktet tillräckligt med pengar?
+            require(address(this).balance >= paymentAmount, InsufficientContractBalance());
+            // Skicka
+            payable(recipient).transfer(paymentAmount);
+        // ERC20
+        } else {
+            IERC20 paymentToken = IERC20 (tokenAddress);
+            // Har kontraktet tillräckligt med pengar?
+            require(paymentToken.balanceOf(address(this)) >= paymentAmount, InsufficientContractBalance());
+            // Skicka
+            paymentToken.transfer(recipient, paymentAmount);
+        }
 
         payments[_paymentId].status = PaymentStatus.Completed;
 
