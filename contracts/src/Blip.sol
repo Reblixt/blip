@@ -334,9 +334,22 @@ function initPayment(address _tokenAddress, uint256 _amount, string memory _mess
 
         uint refundAmount = payments[_paymentId].amount;
         address refundTo = payments[_paymentId].sender; // spara till event
+        address tokenAddress = payments[_paymentId].tokenAddress;
 
         // Skicka pengarna tillbaka till avsändaren
-        payable(refundTo).transfer(refundAmount);
+
+        if(tokenAddress == address(0)) {
+            // Har kontraktet tillräckligt med pengar?
+            require(address(this).balance >= refundAmount, InsufficientContractBalance());
+            // Skicka
+            payable(refundTo).transfer(refundAmount);
+        } else {
+            IERC20 paymentToken = IERC20 (tokenAddress);
+            // Har kontraktet tillräckligt med pengar?
+            require(paymentToken.balanceOf(address(this)) >= refundAmount, InsufficientContractBalance());
+            // Skicka
+            paymentToken.transfer(refundTo, refundAmount);
+        }
 
         // Uppdatera betalningsstatus
         payments[_paymentId].status = PaymentStatus.SentBack;
