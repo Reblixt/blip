@@ -93,12 +93,62 @@ contract Blip {
     if (guardians.length == 0) revert NoGuardiansSet();
     // 0 är inte giltigt belopp
     if (_amount == 0) revert InvalidAmount();
-    // 0-address ej gilting
+    // Om 0-address, ej gilting
     if (_tokenAddress == address(0)) revert InvalidAddress();
 
     IERC20(_tokenAddress).transferFrom(msg.sender, address(this), _amount); 
         
     _createPayment(_tokenAddress, _amount, _message);
+    
+    }
+
+    function directPayment(string memory _message) external payable {
+        if (msg.value == 0) revert InvalidAmount();
+
+        if (_tokenAddress == address(0)) revert InvalidAddress();
+
+       Payment storage newPayment = payments[paymentCounter];
+        newPayment.id = paymentCounter;
+        newPayment.sender = msg.sender;
+        newPayment.tokenAddress = address(0);
+        newPayment.guardianCount = 0;
+        newPayment.receiver = recipientAddress;
+        newPayment.amount = msg.value;
+        newPayment.message = _message;
+        newPayment.timestamp = block.timestamp;
+        newPayment.status = PaymentStatus.Completed;
+    
+        paymentCounter++;
+        
+        payable(recipientAddress).transfer(msg.value);
+
+        emit PaymentReleased(recipientAddress, msg.value);
+        
+    }
+
+    function directPayment(address _tokenAddress, uint256 _amount, string memory _message) external {
+        if (_tokenAddress == address(0)) revert InvalidAddress();
+        if (_amount == 0) revert InvalidAmount();
+
+        IERC20(_tokenAddress).transferFrom(msg.sender, address(this), _amount); 
+
+       Payment storage newPayment = payments[paymentCounter];
+        newPayment.id = paymentCounter;
+        newPayment.sender = msg.sender;
+        newPayment.tokenAddress = _tokenAddress;
+        newPayment.guardianCount = 0;
+        newPayment.receiver = recipientAddress;
+        newPayment.amount = _amount;
+        newPayment.message = _message;
+        newPayment.timestamp = block.timestamp;
+        newPayment.status = PaymentStatus.Completed;
+    
+        paymentCounter++;
+
+        IERC20 paymentToken = IERC20 (_tokenAddress);
+        paymentToken.transfer(recipientAddress, _amount);
+
+        emit PaymentReleased(recipientAddress, _amount);
     }
 
     function _createPayment(address _tokenAddress, uint256 _amount, string memory _message) internal {
