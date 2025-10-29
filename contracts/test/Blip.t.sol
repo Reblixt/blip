@@ -9,7 +9,7 @@ contract BlipTest is Test {
     Blip public kontrakt;
 
     address public Alice = vm.addr(129);
-    address public Bill = vm.addr(130);  // <- Lägg till denna
+    address public Bill = vm.addr(130); 
 
     // Deklarera event
     event GuardianAdded(address indexed recipientAddress, address indexed guardianAddress);
@@ -20,6 +20,7 @@ contract BlipTest is Test {
         kontrakt = new Blip();
         vm.deal(Alice, 1 ether);
         vm.deal(Bill, 2 ether);
+        vm.deal(address(kontrakt), 1 ether);
     }
 
     function test_recipientIsSetCorrectly() public view {
@@ -63,7 +64,6 @@ contract BlipTest is Test {
     function test_declineGuardianRole() public {
         // 1. Recipient föreslår Alice
         kontrakt.proposeGuardian(Alice);
-
         vm.prank(Alice);
 
         // 2. Förvänta event
@@ -78,11 +78,8 @@ contract BlipTest is Test {
     }
 
     function test_initPayment() public {
-        // 1. Sätt upp Alice som guardian
-        //    (föreslå + acceptera)
-        kontrakt.proposeGuardian(Alice);
-        vm.prank(Alice);
-        kontrakt.acceptGuardianRole();
+        
+        _setUpGuardians();
 
         //    - Event emitterades
         vm.expectEmit(true, true, true, true);
@@ -101,36 +98,22 @@ contract BlipTest is Test {
         assertEq(address(kontrakt).balance, 1 ether);
     }
 
-    // function test_initPayment() public {
+    function test_ApprovePaymentsWithGuardians() public {
+        _setUpGuardians();
 
-    //     uint balance = Alice.balance;
-    //     assertEq (balance, 1 ether);
+        vm.prank(Bill);
+        kontrakt.initPayment{value: 1 ether}("Test message");
 
-    //     kontrakt.addGuardian(address(0x0000000000000000000000000000000000000000));
+        console.log(address(kontrakt).balance);
 
-    //     vm.prank(Alice);
+        vm.prank(Alice);
+        kontrakt.approvePayment(0);
 
-    //     kontrakt.initPayment{
-    //         value: 1 * 10**18
-    //     }();
+    }
 
-    //     uint newBalance = Alice.balance;
-    //     assertEq (newBalance, 0);
-    // }
-
-    // function test_Increment() public {
-    //     address sender = msg.sender;
-    //     console.log("signer", sender);
-    //     vm.startPrank(Alice);
-    //     console.log("signer", msg.sender);
-    //     counter.increment();
-    //     vm.stopPrank();
-    //     assertEq(counter.number(), 1);
-    // }
-    //
-    // function testFuzz_SetNumber(uint256 x) public {
-    //     counter.setNumber(x);
-    //     counter.increment();
-    //     assertEq(counter.number(), x);
-    // }
+    function _setUpGuardians() internal {
+        kontrakt.proposeGuardian(Alice);
+        vm.prank(Alice);
+        kontrakt.acceptGuardianRole();
+    }
 }

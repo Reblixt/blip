@@ -2,7 +2,6 @@
 pragma solidity ^0.8.30;
 
 import {IERC20} from "forge-std/interfaces/IERC20.sol";
-// import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 // Swish alternative
 contract Blip {
@@ -102,54 +101,54 @@ contract Blip {
     
     }
 
-    function directPayment(string memory _message) external payable {
-        if (msg.value == 0) revert InvalidAmount();
+    // function directPayment(string memory _message) external payable {
+    //     if (msg.value == 0) revert InvalidAmount();
 
-        if (_tokenAddress == address(0)) revert InvalidAddress();
+    //     if (_tokenAddress == address(0)) revert InvalidAddress();
 
-       Payment storage newPayment = payments[paymentCounter];
-        newPayment.id = paymentCounter;
-        newPayment.sender = msg.sender;
-        newPayment.tokenAddress = address(0);
-        newPayment.guardianCount = 0;
-        newPayment.receiver = recipientAddress;
-        newPayment.amount = msg.value;
-        newPayment.message = _message;
-        newPayment.timestamp = block.timestamp;
-        newPayment.status = PaymentStatus.Completed;
+    //    Payment storage newPayment = payments[paymentCounter];
+    //     newPayment.id = paymentCounter;
+    //     newPayment.sender = msg.sender;
+    //     newPayment.tokenAddress = address(0);
+    //     newPayment.guardianCount = 0;
+    //     newPayment.receiver = recipientAddress;
+    //     newPayment.amount = msg.value;
+    //     newPayment.message = _message;
+    //     newPayment.timestamp = block.timestamp;
+    //     newPayment.status = PaymentStatus.Completed;
     
-        paymentCounter++;
+    //     paymentCounter++;
         
-        payable(recipientAddress).transfer(msg.value);
+    //     payable(recipientAddress).transfer(msg.value);
 
-        emit PaymentReleased(recipientAddress, msg.value);
+    //     emit PaymentReleased(recipientAddress, msg.value);
         
-    }
+    // }
 
-    function directPayment(address _tokenAddress, uint256 _amount, string memory _message) external {
-        if (_tokenAddress == address(0)) revert InvalidAddress();
-        if (_amount == 0) revert InvalidAmount();
+    // function directPayment(address _tokenAddress, uint256 _amount, string memory _message) external {
+    //     if (_tokenAddress == address(0)) revert InvalidAddress();
+    //     if (_amount == 0) revert InvalidAmount();
 
-        IERC20(_tokenAddress).transferFrom(msg.sender, address(this), _amount); 
+    //     IERC20(_tokenAddress).transferFrom(msg.sender, address(this), _amount); 
 
-       Payment storage newPayment = payments[paymentCounter];
-        newPayment.id = paymentCounter;
-        newPayment.sender = msg.sender;
-        newPayment.tokenAddress = _tokenAddress;
-        newPayment.guardianCount = 0;
-        newPayment.receiver = recipientAddress;
-        newPayment.amount = _amount;
-        newPayment.message = _message;
-        newPayment.timestamp = block.timestamp;
-        newPayment.status = PaymentStatus.Completed;
+    //    Payment storage newPayment = payments[paymentCounter];
+    //     newPayment.id = paymentCounter;
+    //     newPayment.sender = msg.sender;
+    //     newPayment.tokenAddress = _tokenAddress;
+    //     newPayment.guardianCount = 0;
+    //     newPayment.receiver = recipientAddress;
+    //     newPayment.amount = _amount;
+    //     newPayment.message = _message;
+    //     newPayment.timestamp = block.timestamp;
+    //     newPayment.status = PaymentStatus.Completed;
     
-        paymentCounter++;
+    //     paymentCounter++;
 
-        IERC20 paymentToken = IERC20 (_tokenAddress);
-        paymentToken.transfer(recipientAddress, _amount);
+    //     IERC20 paymentToken = IERC20 (_tokenAddress);
+    //     paymentToken.transfer(recipientAddress, _amount);
 
-        emit PaymentReleased(recipientAddress, _amount);
-    }
+    //     emit PaymentReleased(recipientAddress, _amount);
+    // }
 
     function _createPayment(address _tokenAddress, uint256 _amount, string memory _message) internal {
         // Hämta referens till betalningen i storage
@@ -171,6 +170,8 @@ contract Blip {
         newPayment.approvalCount = 0;
     
         paymentCounter++;
+
+        // borde createPayment anropa releasePayment() om guardianCount == 0?
 
         // Event-logg
         emit PaymentInitiated(msg.sender, _amount);
@@ -261,6 +262,7 @@ contract Blip {
     // Transaktioner
 
         function approvePayment(uint256 _paymentId) external {
+
         // Kontrollera att betalningen är pending
         require(
             payments[_paymentId].status == PaymentStatus.Pending,
@@ -309,14 +311,16 @@ contract Blip {
         address tokenAddress = payments[_paymentId].tokenAddress;
         uint paymentAmount = payments[_paymentId].amount;
         address recipient = payments[_paymentId].receiver;
-
+  
         // Skicka pengarna till mottagaren
         // Native token
         if(tokenAddress == address(0) ) {
              // Har kontraktet tillräckligt med pengar?
             require(address(this).balance >= paymentAmount, InsufficientContractBalance());
             // Skicka
-            payable(recipient).transfer(paymentAmount);
+            //   require(false, "Is False!");
+            // payable(recipient).transfer(paymentAmount);
+            address(this).transafer(recipient, paymentAmount);
         // ERC20
         } else {
             IERC20 paymentToken = IERC20 (tokenAddress);
