@@ -5,9 +5,8 @@ import {IERC20} from "forge-std/interfaces/IERC20.sol";
 
 // Swish alternative
 contract Blip {
-
     constructor() {
-    recipientAddress = msg.sender;
+        recipientAddress = msg.sender;
     }
 
     modifier onlyRecipient() {
@@ -33,11 +32,23 @@ contract Blip {
     error DirectPaymentsNotAllowed();
 
     // event RecipientSet(address recipientAddress);
-    event GuardianProposed(address indexed recipient, address indexed proposedGuardian);
-    event GuardianAdded(address indexed recipientAddress, address indexed guardianAddress);
-    event GuardianDeclinedRole(address indexed recipient, address indexed guardian);
+    event GuardianProposed(
+        address indexed recipient,
+        address indexed proposedGuardian
+    );
+    event GuardianAdded(
+        address indexed recipientAddress,
+        address indexed guardianAddress
+    );
+    event GuardianDeclinedRole(
+        address indexed recipient,
+        address indexed guardian
+    );
     event GuardianLeftRole(address indexed recipient, address indexed guardian);
-    event GuardianProposalCancelled(address indexed recipient, address indexed guardian);
+    event GuardianProposalCancelled(
+        address indexed recipient,
+        address indexed guardian
+    );
     event GuardianRemoved(address recipientAddress, address guardianAddress);
 
     event PaymentInitiated(address senderAddress, uint amount);
@@ -46,7 +57,13 @@ contract Blip {
     event PaymentRefunded(address senderAddress, uint amount);
     event PaymentReleased(address recipientAddress, uint amount);
 
-    enum PaymentStatus { Pending, SentBack, Approved, Rejected, Completed }
+    enum PaymentStatus {
+        Pending,
+        SentBack,
+        Approved,
+        Rejected,
+        Completed
+    }
 
     struct Payment {
         uint256 id;
@@ -76,29 +93,31 @@ contract Blip {
 
     // Guardians tar bort sig själva
 
-
     function initPayment(string memory _message) external payable {
-    // Minst en guardian behöver vara satt
-    if (guardians.length == 0) revert NoGuardiansSet();
-    // 0 är inte giltigt belopp
-    if (msg.value == 0) revert InvalidAmount();
+        // Minst en guardian behöver vara satt
+        if (guardians.length == 0) revert NoGuardiansSet();
+        // 0 är inte giltigt belopp
+        if (msg.value == 0) revert InvalidAmount();
 
-    //Anropa helper
-    _createPayment(address(0), msg.value, _message);
+        //Anropa helper
+        _createPayment(address(0), msg.value, _message);
     }
 
-    function initPayment(address _tokenAddress, uint256 _amount, string memory _message) external {
-    // Minst en guardian behöver vara satt
-    if (guardians.length == 0) revert NoGuardiansSet();
-    // 0 är inte giltigt belopp
-    if (_amount == 0) revert InvalidAmount();
-    // Om 0-address, ej gilting
-    if (_tokenAddress == address(0)) revert InvalidAddress();
+    function initPayment(
+        address _tokenAddress,
+        uint256 _amount,
+        string memory _message
+    ) external {
+        // Minst en guardian behöver vara satt
+        if (guardians.length == 0) revert NoGuardiansSet();
+        // 0 är inte giltigt belopp
+        if (_amount == 0) revert InvalidAmount();
+        // Om 0-address, ej gilting
+        if (_tokenAddress == address(0)) revert InvalidAddress();
 
-    IERC20(_tokenAddress).transferFrom(msg.sender, address(this), _amount); 
-        
-    _createPayment(_tokenAddress, _amount, _message);
-    
+        IERC20(_tokenAddress).transferFrom(msg.sender, address(this), _amount);
+
+        _createPayment(_tokenAddress, _amount, _message);
     }
 
     // function directPayment(string memory _message) external payable {
@@ -116,20 +135,20 @@ contract Blip {
     //     newPayment.message = _message;
     //     newPayment.timestamp = block.timestamp;
     //     newPayment.status = PaymentStatus.Completed;
-    
+
     //     paymentCounter++;
-        
+
     //     payable(recipientAddress).transfer(msg.value);
 
     //     emit PaymentReleased(recipientAddress, msg.value);
-        
+
     // }
 
     // function directPayment(address _tokenAddress, uint256 _amount, string memory _message) external {
     //     if (_tokenAddress == address(0)) revert InvalidAddress();
     //     if (_amount == 0) revert InvalidAmount();
 
-    //     IERC20(_tokenAddress).transferFrom(msg.sender, address(this), _amount); 
+    //     IERC20(_tokenAddress).transferFrom(msg.sender, address(this), _amount);
 
     //    Payment storage newPayment = payments[paymentCounter];
     //     newPayment.id = paymentCounter;
@@ -141,7 +160,7 @@ contract Blip {
     //     newPayment.message = _message;
     //     newPayment.timestamp = block.timestamp;
     //     newPayment.status = PaymentStatus.Completed;
-    
+
     //     paymentCounter++;
 
     //     IERC20 paymentToken = IERC20 (_tokenAddress);
@@ -150,7 +169,11 @@ contract Blip {
     //     emit PaymentReleased(recipientAddress, _amount);
     // }
 
-    function _createPayment(address _tokenAddress, uint256 _amount, string memory _message) internal {
+    function _createPayment(
+        address _tokenAddress,
+        uint256 _amount,
+        string memory _message
+    ) internal {
         // Hämta referens till betalningen i storage
         Payment storage newPayment = payments[paymentCounter];
         newPayment.id = paymentCounter;
@@ -163,38 +186,38 @@ contract Blip {
         newPayment.status = PaymentStatus.Pending;
 
         for (uint i = 0; i < guardians.length; i++) {
-        newPayment.requiredApprovals[guardians[i]] = true;
+            newPayment.requiredApprovals[guardians[i]] = true;
         }
 
         newPayment.guardianCount = guardians.length;
         newPayment.approvalCount = 0;
-    
+
         paymentCounter++;
 
         // borde createPayment anropa releasePayment() om guardianCount == 0?
 
         // Event-logg
         emit PaymentInitiated(msg.sender, _amount);
-    
     }
 
     function proposeGuardian(address newGuardian) external onlyRecipient {
         // Ogiltig address
         require(newGuardian != address(0), InvalidAddress());
         // Recipient kan inte vara guardian
-        require(newGuardian != recipientAddress, RecipientCannotBeGuardian());  // Vilket error?
+        require(newGuardian != recipientAddress, RecipientCannotBeGuardian()); // Vilket error?
         // Redan aktiv guardian
         require(!guardiansMap[newGuardian], GuardianAlreadyExist());
         // Redan pending guardian
         require(!pendingGuardians[newGuardian], GuardianAlreadyPending());
         // Sätt som pending
         pendingGuardians[newGuardian] = true;
-        
-        
+
         emit GuardianProposed(msg.sender, newGuardian);
     }
 
-    function cancelGuardianProposal(address newGuardian) external onlyRecipient {
+    function cancelGuardianProposal(
+        address newGuardian
+    ) external onlyRecipient {
         // är guardian markerad som pending?
         require(pendingGuardians[newGuardian], GuardianNotPending());
 
@@ -207,14 +230,14 @@ contract Blip {
     function acceptGuardianRole() external {
         // är msg.sender markerad som pending guardian?
         require(pendingGuardians[msg.sender], GuardianNotPending());
-         // Ta bort från pending-mapping
+        // Ta bort från pending-mapping
         pendingGuardians[msg.sender] = false;
         // sätt i mapping
         guardiansMap[msg.sender] = true;
         // lägg till i arrayen
         guardians.push(msg.sender);
 
-        emit GuardianAdded(recipientAddress, msg.sender);  
+        emit GuardianAdded(recipientAddress, msg.sender);
     }
 
     function declineGuardianRole() external {
@@ -232,7 +255,7 @@ contract Blip {
         // Ta bort från mapping
         guardiansMap[msg.sender] = false;
         // Ta bort från array
-        removeFromArray(msg.sender); 
+        removeFromArray(msg.sender);
 
         emit GuardianLeftRole(recipientAddress, msg.sender);
     }
@@ -243,11 +266,10 @@ contract Blip {
         // Ta bort från mapping
         guardiansMap[oldGuardian] = false;
         // Ta bort från array
-        removeFromArray(oldGuardian);  
+        removeFromArray(oldGuardian);
         // event-logga att mottagaren har uppdaterat listan
-        emit GuardianRemoved(msg.sender, oldGuardian); 
+        emit GuardianRemoved(msg.sender, oldGuardian);
     }
-        
 
     function removeFromArray(address guardian) internal {
         for (uint i = 0; i < guardians.length; i++) {
@@ -261,8 +283,7 @@ contract Blip {
 
     // Transaktioner
 
-        function approvePayment(uint256 _paymentId) external {
-
+    function approvePayment(uint256 _paymentId) external {
         // Kontrollera att betalningen är pending
         require(
             payments[_paymentId].status == PaymentStatus.Pending,
@@ -270,13 +291,16 @@ contract Blip {
         );
 
         // Kontrollera att guardian inte redan godkänt
-        require(!payments[_paymentId].approvedBy[msg.sender], SignerAlreadyApproved());
+        require(
+            !payments[_paymentId].approvedBy[msg.sender],
+            SignerAlreadyApproved()
+        );
 
         // Var guardian när betalning skapades?
         require(
             payments[_paymentId].requiredApprovals[msg.sender] == true,
             NotASigner()
-            );
+        );
 
         // spara värdet till event
         uint paymentAmount = payments[_paymentId].amount;
@@ -288,7 +312,10 @@ contract Blip {
         payments[_paymentId].approvalCount++;
 
         // Om tillräckligt många har godkänt
-        if (payments[_paymentId].approvalCount == payments[_paymentId].guardianCount) {
+        if (
+            payments[_paymentId].approvalCount ==
+            payments[_paymentId].guardianCount
+        ) {
             // Sätt betalningsstatus till approved
             payments[_paymentId].status = PaymentStatus.Approved;
             // Skicka ut pengarna
@@ -297,10 +324,8 @@ contract Blip {
 
         // Event-logga att betalningen har godkännts
         emit PaymentSigned(msg.sender, paymentAmount);
-
     }
 
-    
     function releasePayment(uint256 _paymentId) internal {
         // Kontrollera att betalningen är Approved
         require(
@@ -311,21 +336,27 @@ contract Blip {
         address tokenAddress = payments[_paymentId].tokenAddress;
         uint paymentAmount = payments[_paymentId].amount;
         address recipient = payments[_paymentId].receiver;
-  
+
         // Skicka pengarna till mottagaren
         // Native token
-        if(tokenAddress == address(0) ) {
-             // Har kontraktet tillräckligt med pengar?
-            require(address(this).balance >= paymentAmount, InsufficientContractBalance());
+        if (tokenAddress == address(0)) {
+            // Har kontraktet tillräckligt med pengar?
+            require(
+                address(this).balance >= paymentAmount,
+                InsufficientContractBalance()
+            );
             // Skicka
             //   require(false, "Is False!");
             // payable(recipient).transfer(paymentAmount);
             address(this).transafer(recipient, paymentAmount);
-        // ERC20
+            // ERC20
         } else {
-            IERC20 paymentToken = IERC20 (tokenAddress);
+            IERC20 paymentToken = IERC20(tokenAddress);
             // Har kontraktet tillräckligt med pengar?
-            require(paymentToken.balanceOf(address(this)) >= paymentAmount, InsufficientContractBalance());
+            require(
+                paymentToken.balanceOf(address(this)) >= paymentAmount,
+                InsufficientContractBalance()
+            );
             // Skicka
             paymentToken.transfer(recipient, paymentAmount);
         }
@@ -334,12 +365,13 @@ contract Blip {
 
         // Event-logga att betalningen har släppts
         emit PaymentReleased(recipient, paymentAmount);
-
     }
 
-    function hasApproved(uint256 _paymentId, address _guardian) external view returns(bool) {
+    function hasApproved(
+        uint256 _paymentId,
+        address _guardian
+    ) external view returns (bool) {
         return payments[_paymentId].approvedBy[_guardian];
-
     }
 
     function cancelPendingPayment(uint256 _paymentId) external onlyRecipient {
@@ -354,7 +386,11 @@ contract Blip {
 
     function refundPayment(uint256 _paymentId) internal {
         // Kontrollera att betalningen faktiskt är Pending eller Rejected
-        require(payments[_paymentId].status == PaymentStatus.Pending || payments[_paymentId].status == PaymentStatus.Rejected, PaymentNotPending());
+        require(
+            payments[_paymentId].status == PaymentStatus.Pending ||
+                payments[_paymentId].status == PaymentStatus.Rejected,
+            PaymentNotPending()
+        );
 
         uint refundAmount = payments[_paymentId].amount;
         address refundTo = payments[_paymentId].sender; // spara till event
@@ -362,15 +398,21 @@ contract Blip {
 
         // Skicka pengarna tillbaka till avsändaren
 
-        if(tokenAddress == address(0)) {
+        if (tokenAddress == address(0)) {
             // Har kontraktet tillräckligt med pengar?
-            require(address(this).balance >= refundAmount, InsufficientContractBalance());
+            require(
+                address(this).balance >= refundAmount,
+                InsufficientContractBalance()
+            );
             // Skicka
             payable(refundTo).transfer(refundAmount);
         } else {
-            IERC20 paymentToken = IERC20 (tokenAddress);
+            IERC20 paymentToken = IERC20(tokenAddress);
             // Har kontraktet tillräckligt med pengar?
-            require(paymentToken.balanceOf(address(this)) >= refundAmount, InsufficientContractBalance());
+            require(
+                paymentToken.balanceOf(address(this)) >= refundAmount,
+                InsufficientContractBalance()
+            );
             // Skicka
             paymentToken.transfer(refundTo, refundAmount);
         }
@@ -380,7 +422,6 @@ contract Blip {
 
         // Event-logga att betalningen har skickats tillbaka
         emit PaymentRefunded(refundTo, refundAmount);
-
     }
 
     function rejectPayment(uint256 _paymentId) external {
@@ -390,13 +431,13 @@ contract Blip {
         require(
             payments[_paymentId].status == PaymentStatus.Pending,
             PaymentNotPending()
-            );
+        );
 
         // Var guardian när betalning skapades?
         require(
             payments[_paymentId].requiredApprovals[msg.sender] == true,
             NotASigner()
-            );
+        );
 
         uint paymentAmount = payments[_paymentId].amount;
 
@@ -406,13 +447,25 @@ contract Blip {
         // Skicka tillbaka pengarna till avsändaren
         refundPayment(_paymentId);
 
-         // Event-logga att betalningen har avvisats
-         emit PaymentRejected(msg.sender, paymentAmount);
+        // Event-logga att betalningen har avvisats
+        emit PaymentRejected(msg.sender, paymentAmount);
     }
 
-    function getPayment(uint256 _id) external view returns ( 
-        uint256 id, address sender, address receiver, uint256 amount, string memory message, uint256 timestamp, PaymentStatus status) {
-
+    function getPayment(
+        uint256 _id
+    )
+        external
+        view
+        returns (
+            uint256 id,
+            address sender,
+            address receiver,
+            uint256 amount,
+            string memory message,
+            uint256 timestamp,
+            PaymentStatus status
+        )
+    {
         return (
             payments[_id].id,
             payments[_id].sender,
@@ -421,7 +474,7 @@ contract Blip {
             payments[_id].message,
             payments[_id].timestamp,
             payments[_id].status
-            );
+        );
     }
 
     receive() external payable {
