@@ -9,11 +9,17 @@ contract BlipTest is Test {
     Blip public kontrakt;
 
     address public Alice = vm.addr(129);
-    address public Bill = vm.addr(130); 
+    address public Bill = vm.addr(130);
 
     // Deklarera event
-    event GuardianAdded(address indexed recipientAddress, address indexed guardianAddress);
-    event GuardianDeclinedRole(address indexed recipient, address indexed guardian);
+    event GuardianAdded(
+        address indexed recipientAddress,
+        address indexed guardianAddress
+    );
+    event GuardianDeclinedRole(
+        address indexed recipient,
+        address indexed guardian
+    );
     event PaymentInitiated(address senderAddress, uint amount);
 
     function setUp() public {
@@ -29,7 +35,7 @@ contract BlipTest is Test {
     }
 
     function test_proposeGuardian() public {
-        kontrakt.proposeGuardian(Alice); 
+        kontrakt.proposeGuardian(Alice);
         bool isPending = kontrakt.pendingGuardians(Alice);
         assertEq(isPending, true);
     }
@@ -50,12 +56,12 @@ contract BlipTest is Test {
 
         // 2. Förvänta event
         vm.expectEmit(true, true, true, true);
-        emit GuardianAdded(address(this), Alice);  // Fyll i rätt värden här
+        emit GuardianAdded(address(this), Alice); // Fyll i rätt värden här
 
         // 3. Alice accepterar (använd vm.prank!)
         vm.prank(Alice);
         kontrakt.acceptGuardianRole();
-        
+
         // 4. Verifiera att Alice är aktiv guardian
         assertEq(kontrakt.pendingGuardians(Alice), false);
         assertEq(kontrakt.guardiansMap(Alice), true);
@@ -68,27 +74,25 @@ contract BlipTest is Test {
 
         // 2. Förvänta event
         vm.expectEmit(true, true, true, true);
-        emit GuardianDeclinedRole(address(this), Alice);  // Fyll i rätt värden här
+        emit GuardianDeclinedRole(address(this), Alice); // Fyll i rätt värden här
 
         kontrakt.declineGuardianRole();
 
         assertEq(kontrakt.pendingGuardians(Alice), false);
         assertEq(kontrakt.guardiansMap(Alice), false);
-
     }
 
     function test_initPayment() public {
-        
         _setUpGuardians();
 
         //    - Event emitterades
         vm.expectEmit(true, true, true, true);
-        emit PaymentInitiated(Bill, 1 ether);  // Fyll i rätt värden här
-        
+        emit PaymentInitiated(Bill, 1 ether); // Fyll i rätt värden här
+
         // 2. Bill skickar betalning
         vm.prank(Bill);
         kontrakt.initPayment{value: 1 ether}("Test message");
-        
+
         // 3. Verifiera:
         //    - paymentCounter ökade
         assertEq(kontrakt.paymentCounter(), 1);
@@ -108,7 +112,6 @@ contract BlipTest is Test {
 
         vm.prank(Alice);
         kontrakt.approvePayment(0);
-
     }
 
     function _setUpGuardians() internal {

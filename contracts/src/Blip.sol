@@ -347,8 +347,8 @@ contract Blip {
             );
             // Skicka
             //   require(false, "Is False!");
-            // payable(recipient).transfer(paymentAmount);
-            address(this).transafer(recipient, paymentAmount);
+            payable(recipient).transfer(paymentAmount);
+            // address(this).transafer(recipient, paymentAmount);
             // ERC20
         } else {
             IERC20 paymentToken = IERC20(tokenAddress);
