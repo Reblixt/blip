@@ -1,13 +1,15 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { Prisma } from 'generated/prisma/client';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common'
+import { Prisma } from 'generated/prisma/client'
+import { PrismaService } from '../prisma/prisma.service'
 
 @Injectable()
 export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private readonly logger = new Logger(UsersService.name)
+
   async findAll() {
-    return this.prisma.users.findMany();
+    return this.prisma.users.findMany()
   }
 
   async findOne(id: string) {
@@ -15,34 +17,32 @@ export class UsersService {
       where: {
         id,
       },
-    });
+    })
 
     if (!user) {
-      throw new NotFoundException(`User with ID ${id} not found`);
+      throw new NotFoundException(`User with ID ${id} not found`)
     }
 
-    return user;
+    return user
   }
 
   async create(userData: Prisma.UsersCreateInput) {
     return this.prisma.users.create({
       data: userData,
-    });
+    })
   }
 
   async update(id: string, updateData: Prisma.UsersUpdateInput) {
-    await this.findOne(id);
-
+    await this.findOne(id)
     return this.prisma.users.update({
       where: {
         id,
       },
       data: updateData,
-    });
+    })
   }
 
   async remove(id: string) {
-    await this.findOne(id);
-    return this.prisma.users.delete({ where: { id } });
+    return await this.prisma.users.delete({ where: { id } })
   }
 }
