@@ -33,7 +33,9 @@ export class UsersService {
   }
 
   async update(id: string, updateData: Prisma.UsersUpdateInput) {
+    //TODO: Remove unneded code. and add try catch or dot.catch
     await this.findOne(id)
+    //TODO: add await
     return this.prisma.users.update({
       where: {
         id,
@@ -43,6 +45,7 @@ export class UsersService {
   }
 
   async remove(id: string) {
+    //TODO: Do not forget this
     return await this.prisma.users.delete({ where: { id } })
   }
 }
