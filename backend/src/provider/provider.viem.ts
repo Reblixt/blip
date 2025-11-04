@@ -4,6 +4,7 @@ import { anvil } from 'viem/chains';
 
 export const VIEM_PROVIDER = 'VIEM_PROVIDER';
 
+// export type ViemProvider = typeof createPublicClient
 export type ViemProvider = PublicClient;
 
 export const ViemProvider: Provider = {

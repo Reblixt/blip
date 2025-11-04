@@ -1,6 +1,6 @@
 services:
   db:
-    image: postgres:16
+    image: postgres:17
     container_name: blip-postgres
     environment:
       POSTGRES_USER: blip_user
@@ -8,7 +8,7 @@ services:
       POSTGRES_DB: blip_db
     restart: always
     ports:
-      - '5432:5432'
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     # healthcheck:

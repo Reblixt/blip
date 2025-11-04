@@ -6,28 +6,28 @@ import {Blip} from "../src/Blip.sol";
 import {console} from "forge-std/console.sol";
 
 contract CounterScript is Script {
-//NOTE: 
-  //forge script script/Blip.s.sol --rpc-url http://127.0.0.1:8545 --broadcast --interactives 1
+    //NOTE:
+    //forge script script/Blip.s.sol --rpc-url http://127.0.0.1:8545 --broadcast
+
+    uint256 PRIVATE_KEY = 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
+    address newGuardian = 0x70997970C51812dc3A010C7d01b50e0d17dc79C8;
 
     Blip public blip;
 
     address public owner;
 
-    function setUp() public {
-    }
+    function setUp() public {}
 
     function run() public {
-
-
-        vm.startBroadcast();
+        vm.startBroadcast(PRIVATE_KEY);
 
         blip = new Blip();
 
         blip.initPayment();
 
-        console.log("Owner/sender", msg.sender);
+        console.log("Owner/sender",  msg.sender);
         console.log("contract address", address(blip));
-        
+
         vm.stopBroadcast();
     }
 
