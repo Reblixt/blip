@@ -1,4 +1,4 @@
-const blipAbi = [
+export const blipAbi = [
   { type: 'constructor', inputs: [], stateMutability: 'nonpayable' },
   { type: 'fallback', stateMutability: 'payable' },
   { type: 'receive', stateMutability: 'payable' },
@@ -393,4 +393,4 @@ const blipAbi = [
   { type: 'error', name: 'PaymentNotPending', inputs: [] },
   { type: 'error', name: 'RecipientCannotBeGuardian', inputs: [] },
   { type: 'error', name: 'SignerAlreadyApproved', inputs: [] },
-] as const
+] as const;

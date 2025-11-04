@@ -7,7 +7,7 @@ import {console} from "forge-std/console.sol";
 
 contract CounterScript is Script {
 //NOTE: 
-  //forge script script/Blip.s.sol --rpc-url http://127.0.0.1:8545
+  //forge script script/Blip.s.sol --rpc-url http://127.0.0.1:8545 --broadcast --interactives 1
 
     Blip public blip;
 
@@ -17,13 +17,19 @@ contract CounterScript is Script {
     }
 
     function run() public {
+
+
         vm.startBroadcast();
 
         blip = new Blip();
-        console.log("Owner/sender",msg.sender);
+
+        blip.initPayment();
+
+        console.log("Owner/sender", msg.sender);
         console.log("contract address", address(blip));
         
-
         vm.stopBroadcast();
     }
+
+
 }

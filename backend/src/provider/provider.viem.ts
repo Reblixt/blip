@@ -1,10 +1,10 @@
-import { Provider } from '@nestjs/common'
-import { createPublicClient, http } from 'viem'
-import { anvil } from 'viem/chains'
+import { Provider } from '@nestjs/common';
+import { createPublicClient, http, PublicClient } from 'viem';
+import { anvil } from 'viem/chains';
 
-export const VIEM_PROVIDER = 'VIEM_PROVIDER'
+export const VIEM_PROVIDER = 'VIEM_PROVIDER';
 
-export type ViemProvider = typeof createPublicClient
+export type ViemProvider = PublicClient;
 
 export const ViemProvider: Provider = {
   provide: VIEM_PROVIDER,
@@ -13,4 +13,4 @@ export const ViemProvider: Provider = {
       chain: anvil,
       transport: http(),
     }),
-}
+};

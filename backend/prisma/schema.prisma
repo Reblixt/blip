@@ -16,7 +16,8 @@ datasource db {
 
 model Users {
   id       String  @id @default(cuid())
-  email    String  @unique
+  email    String?  @unique
+  walletAddress String? @unique
   name     String?
-  password String
+  password String?
 }
