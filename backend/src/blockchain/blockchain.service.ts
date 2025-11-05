@@ -105,6 +105,36 @@ export class BlockchainService implements OnModuleInit {
         );
       },
     });
+
+    this.viem.watchContractEvent({
+      abi: blipAbi,
+      address: '0x5FbDB2315678afecb367f032d93F642f64180aa3' as Address,
+      eventName: 'GuardianProposalCancelled',
+      onLogs: (log) => {
+        const recipient = log[0].args.recipient;
+        const guardian = log[0].args.guardian;
+
+        this.logger.debug(
+          `GuardianProposalCancelled event detected: Recipient - ${JSON.stringify(
+            recipient,
+            (key, value) =>
+              typeof value === 'bigint' ? value.toString() : value,
+            2
+          )}, Guardian - ${JSON.stringify(
+            guardian,
+            (key, value) =>
+              typeof value === 'bigint' ? value.toString() : value,
+            2
+          )}`
+        );
+      },
+
+      onError: (error) => {
+        this.logger.error(
+          `Error watching GuardianProposalCancelled events: ${error.message}`
+        );
+      },
+    });
   }
 
   async watchPaymentEvents() {
