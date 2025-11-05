@@ -21,13 +21,11 @@ contract CounterScript is Script {
     function run() public {
         vm.startBroadcast(PRIVATE_KEY);
 
-        blip = new Blip();
-
-        console.log("Owner/sender",  msg.sender);
+        blip = Blip(payable(address(0x5FbDB2315678afecb367f032d93F642f64180aa3)));
+        blip.initPayment{value: 1 ether}("Test message");
+        console.log("Owner/sender", msg.sender);
         console.log("contract address", address(blip));
 
         vm.stopBroadcast();
     }
-
-
 }

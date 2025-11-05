@@ -9,19 +9,20 @@ export class BlockchainService implements OnModuleInit {
   private readonly logger = new Logger(BlockchainService.name);
 
   async onModuleInit() {
-    await this.watchEvent();
+    this.watchGuardianEvents();
+    this.watchPaymentEvents();
   }
 
-  async watchEvent() {
-    this.logger.debug('Starting to watch GuardianProposed events...');
+  async watchGuardianEvents() {
+    this.logger.debug('Starting to watch Guardian events...');
 
     this.viem.watchContractEvent({
       abi: blipAbi,
       address: '0x5FbDB2315678afecb367f032d93F642f64180aa3' as Address,
       eventName: 'GuardianProposed',
       onLogs: (log) => {
-        const recipient = log[0];
-        const guardian = log[1];
+        const recipient = log[0].args.recipient;
+        const guardian = log[0].args.proposedGuardian;
 
         this.logger.debug(
           `GuardianProposed event detected: Recipient - ${JSON.stringify(
@@ -37,9 +38,134 @@ export class BlockchainService implements OnModuleInit {
           )}`
         );
       },
+
       onError: (error) => {
         this.logger.error(
           `Error watching GuardianProposed events: ${error.message}`
+        );
+      },
+    });
+
+    this.viem.watchContractEvent({
+      abi: blipAbi,
+      address: '0x5FbDB2315678afecb367f032d93F642f64180aa3' as Address,
+      eventName: 'GuardianAdded',
+      onLogs: (log) => {
+        const recipient = log[0].args.recipientAddress;
+        const guardian = log[0].args.guardianAddress;
+
+        this.logger.debug(
+          `GuardianAdded event detected: Recipient - ${JSON.stringify(
+            recipient,
+            (key, value) =>
+              typeof value === 'bigint' ? value.toString() : value,
+            2
+          )}, Guardian - ${JSON.stringify(
+            guardian,
+            (key, value) =>
+              typeof value === 'bigint' ? value.toString() : value,
+            2
+          )}`
+        );
+      },
+
+      onError: (error) => {
+        this.logger.error(
+          `Error watching GuardianAdded events: ${error.message}`
+        );
+      },
+    });
+  }
+
+  async watchPaymentEvents() {
+    this.logger.debug('Starting to watch Payment events...');
+
+    this.viem.watchContractEvent({
+      abi: blipAbi,
+      address: '0x5FbDB2315678afecb367f032d93F642f64180aa3' as Address,
+      eventName: 'PaymentInitiated',
+      onLogs: (log) => {
+        const sender = log[0].args.senderAddress;
+        const amount = log[0].args.amount;
+
+        this.logger.debug(
+          `PaymentInitiated event detected: Sender - ${JSON.stringify(
+            sender,
+            (key, value) =>
+              typeof value === 'bigint' ? value.toString() : value,
+            2
+          )}, Amount - ${JSON.stringify(
+            amount,
+            (key, value) =>
+              typeof value === 'bigint' ? value.toString() : value,
+            2
+          )}`
+        );
+      },
+
+      onError: (error) => {
+        this.logger.error(
+          `Error watching PaymentInitiated events: ${error.message}`
+        );
+      },
+    });
+
+    this.viem.watchContractEvent({
+      abi: blipAbi,
+      address: '0x5FbDB2315678afecb367f032d93F642f64180aa3' as Address,
+      eventName: 'PaymentSigned',
+      onLogs: (log) => {
+        const signer = log[0].args.signerAddress;
+        const amount = log[0].args.amount;
+
+        this.logger.debug(
+          `PaymentSigned event detected: Signer - ${JSON.stringify(
+            signer,
+            (key, value) =>
+              typeof value === 'bigint' ? value.toString() : value,
+            2
+          )}, Amount - ${JSON.stringify(
+            amount,
+            (key, value) =>
+              typeof value === 'bigint' ? value.toString() : value,
+            2
+          )}`
+        );
+      },
+
+      onError: (error) => {
+        this.logger.error(
+          `Error watching PaymentSigned events: ${error.message}`
+        );
+      },
+    });
+
+    this.viem.watchContractEvent({
+      abi: blipAbi,
+      address: '0x5FbDB2315678afecb367f032d93F642f64180aa3' as Address,
+      eventName: 'PaymentReleased',
+      onLogs: (log) => {
+        const recipient = log[0].args.recipientAddress;
+        const amount = log[0].args.amount;
+
+        this.logger.debug(
+          `PaymentReleased event detected: Recipient - ${JSON.stringify(
+            recipient,
+            (key, value) =>
+              typeof value === 'bigint' ? value.toString() : value,
+            2
+          )}, Amount - ${JSON.stringify(
+            amount,
+            (key, value) =>
+              typeof value === 'bigint' ? value.toString() : value,
+            2
+          )}`
+        );
+      },
+
+      onError: (error) => {
+        this.logger.error(
+          `Error watching PaymentReleased events: ${error.message}`
         );
       },
     });

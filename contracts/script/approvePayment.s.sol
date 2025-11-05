@@ -9,8 +9,8 @@ contract CounterScript is Script {
     //NOTE:
     //forge script script/Blip.s.sol --rpc-url http://127.0.0.1:8545 --broadcast
 
-    uint256 PRIVATE_KEY = 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
-    address newGuardian = 0x70997970C51812dc3A010C7d01b50e0d17dc79C8;
+    uint256 PRIVATE_KEY = 0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d;
+    uint256 paymentId = 0;
 
     Blip public blip;
 
@@ -21,13 +21,11 @@ contract CounterScript is Script {
     function run() public {
         vm.startBroadcast(PRIVATE_KEY);
 
-        blip = new Blip();
-
-        console.log("Owner/sender",  msg.sender);
+        blip = Blip(payable(address(0x5FbDB2315678afecb367f032d93F642f64180aa3)));
+        blip.approvePayment(paymentId);
+        console.log("Owner/sender", msg.sender);
         console.log("contract address", address(blip));
 
         vm.stopBroadcast();
     }
-
-
 }
