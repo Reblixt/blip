@@ -169,5 +169,66 @@ export class BlockchainService implements OnModuleInit {
         );
       },
     });
+
+    this.viem.watchContractEvent({
+      abi: blipAbi,
+      address: '0x5FbDB2315678afecb367f032d93F642f64180aa3' as Address,
+      eventName: 'PaymentRejected',
+      onLogs: (log) => {
+        const signer = log[0].args.signerAddress;
+        const amount = log[0].args.amount;
+
+        this.logger.debug(
+          `PaymentRejected event detected: Signer - ${JSON.stringify(
+            signer,
+            (key, value) =>
+              typeof value === 'bigint' ? value.toString() : value,
+            2
+          )}, Amount - ${JSON.stringify(
+            amount,
+            (key, value) =>
+              typeof value === 'bigint' ? value.toString() : value,
+            2
+          )}`
+        );
+      },
+
+      onError: (error) => {
+        this.logger.error(
+          `Error watching PaymentRejected events: ${error.message}`
+        );
+      },
+    });
+
+    this.viem.watchContractEvent({
+      abi: blipAbi,
+      address: '0x5FbDB2315678afecb367f032d93F642f64180aa3' as Address,
+      eventName: 'PaymentRefunded',
+
+      onLogs: (log) => {
+        const sender = log[0].args.senderAddress;
+        const amount = log[0].args.amount;
+
+        this.logger.debug(
+          `PaymentRefunded event detected: Sender - ${JSON.stringify(
+            sender,
+            (key, value) =>
+              typeof value === 'bigint' ? value.toString() : value,
+            2
+          )}, Amount - ${JSON.stringify(
+            amount,
+            (key, value) =>
+              typeof value === 'bigint' ? value.toString() : value,
+            2
+          )}`
+        );
+      },
+
+      onError: (error) => {
+        this.logger.error(
+          `Error watching PaymentRefunded events: ${error.message}`
+        );
+      },
+    });
   }
 }
