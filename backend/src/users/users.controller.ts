@@ -50,8 +50,13 @@ export class UsersController {
     return this.usersService.proposeGuardian(userId, guardianId);
   }
 
-  @Get(':userId/guardians')
+  @Get(':guardians/guardians')
   async getGuardian(@Param('userId') userId: string) {
     return this.usersService.getGuardians(userId);
+  }
+
+  @Patch('guardians/:guardianRelationId/accept')
+  async acceptGuardianRole(@Param('guardianRelationId') id: string) {
+    return this.usersService.acceptGuardianRole(id);
   }
 }

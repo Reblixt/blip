@@ -76,4 +76,11 @@ export class UsersService {
 
     return user;
   }
+
+  async acceptGuardianRole(guardianRelationId: string) {
+    return await this.prisma.userGuardians.update({
+      where: { id: guardianRelationId },
+      data: { status: 'active' },
+    });
+  }
 }
