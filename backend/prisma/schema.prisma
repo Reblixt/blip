@@ -20,4 +20,20 @@ model Users {
   walletAddress String? @unique
   name     String?
   password String?
+
+  asRecipient   UserGuardians[] @relation("RecipientGuardians")
+  asGuardian    UserGuardians[] @relation("GuardianRelations")
+}
+
+model UserGuardians {
+  id          String   @id @default(cuid())
+  recipientId String
+  guardianId  String
+  status      String
+  createdAt   DateTime @default(now())
+  
+  recipient   Users @relation("RecipientGuardians", fields: [recipientId], references: [id])
+  guardian    Users @relation("GuardianRelations", fields: [guardianId], references: [id])
+  
+  @@unique([recipientId, guardianId])
 }

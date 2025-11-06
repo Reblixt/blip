@@ -10,6 +10,7 @@ import {
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { CreateGuardianDto } from './dto/create-guardian.dto';
 
 @Controller('users')
 export class UsersController {
@@ -38,5 +39,19 @@ export class UsersController {
   @Delete(':id')
   async remove(@Param('id') id: string) {
     return this.usersService.remove(id);
+  }
+
+  @Post(':userId/guardians')
+  async addGuardian(
+    @Param('userId') userId: string,
+    @Body() createGuardianDto: CreateGuardianDto
+  ) {
+    const guardianId = createGuardianDto.guardianId;
+    return this.usersService.proposeGuardian(userId, guardianId);
+  }
+
+  @Get(':userId/guardians')
+  async getGuardian(@Param('userId') userId: string) {
+    return this.usersService.getGuardians(userId);
   }
 }

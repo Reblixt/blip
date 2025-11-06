@@ -56,4 +56,24 @@ export class UsersService {
       throw error;
     }
   }
+
+  async proposeGuardian(recipientId: string, guardianId: string) {
+    return this.prisma.userGuardians.create({
+      data: {
+        recipientId,
+        guardianId,
+        status: 'pending',
+      },
+    });
+  }
+
+  async getGuardians(userId: string) {
+    const user = await this.prisma.userGuardians.findMany({
+      where: {
+        recipientId: userId,
+      },
+    });
+
+    return user;
+  }
 }
