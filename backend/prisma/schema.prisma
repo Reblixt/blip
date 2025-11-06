@@ -15,14 +15,19 @@ datasource db {
 }
 
 model Users {
-  id       String  @id @default(cuid())
-  email    String?  @unique
+  id            String  @id @default(cuid())
+  email         String? @unique
   walletAddress String? @unique
-  name     String?
-  password String?
+  name          String?
+  password      String?
 
-  asRecipient   UserGuardians[] @relation("RecipientGuardians")
-  asGuardian    UserGuardians[] @relation("GuardianRelations")
+  asRecipient UserGuardians[] @relation("RecipientGuardians")
+  asGuardian  UserGuardians[] @relation("GuardianRelations")
+
+  sentPayments     Payments[] @relation("SentPayments")
+  receivedPayments Payments[] @relation("ReceivedPayments")
+
+  paymentApprovals PaymentApprovals[] @relation("ApprovedPayments")
 }
 
 model UserGuardians {
@@ -31,9 +36,38 @@ model UserGuardians {
   guardianId  String
   status      String
   createdAt   DateTime @default(now())
-  
-  recipient   Users @relation("RecipientGuardians", fields: [recipientId], references: [id])
-  guardian    Users @relation("GuardianRelations", fields: [guardianId], references: [id])
-  
+
+  recipient Users @relation("RecipientGuardians", fields: [recipientId], references: [id])
+  guardian  Users @relation("GuardianRelations", fields: [guardianId], references: [id])
+
   @@unique([recipientId, guardianId])
+}
+
+model Payments {
+  id               String   @id @default(cuid())
+  senderId         String
+  recipientId      String
+  amount           String
+  tokenAddress     String?
+  message          String?
+  status           String
+  blockchainTxHash String?
+  createdAt        DateTime @default(now())
+
+  sender    Users              @relation("SentPayments", fields: [senderId], references: [id])
+  recipient Users              @relation("ReceivedPayments", fields: [recipientId], references: [id])
+  approvals PaymentApprovals[]
+}
+
+model PaymentApprovals {
+  id         String   @id @default(cuid())
+  paymentId  String
+  guardianId String
+  approved   Boolean
+  createdAt  DateTime @default(now())
+
+  payment  Payments @relation(fields: [paymentId], references: [id])
+  guardian Users    @relation("ApprovedPayments", fields: [guardianId], references: [id])
+
+  @@unique([paymentId, guardianId])
 }
