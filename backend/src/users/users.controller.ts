@@ -59,4 +59,17 @@ export class UsersController {
   async acceptGuardianRole(@Param('guardianRelationId') id: string) {
     return this.usersService.acceptGuardianRole(id);
   }
+
+  @Patch('guardians/:guardianRelationId/decline')
+  async declineGuardianRole(@Param('guardianRelationId') id: string) {
+    return this.usersService.declineGuardianRole(id);
+  }
+
+  @Delete(':userId/guardians/:guardianId')
+  async removeGuardian(
+    @Param('guardianId') guardianId: string,
+    @Param('userId') userId: string
+  ) {
+    return this.usersService.removeGuardian(userId, guardianId);
+  }
 }

@@ -83,4 +83,16 @@ export class UsersService {
       data: { status: 'active' },
     });
   }
+
+  async declineGuardianRole(guardianRelationId: string) {
+    return await this.prisma.userGuardians.delete({
+      where: { id: guardianRelationId },
+    });
+  }
+
+  async removeGuardian(recipientId: string, guardianId: string) {
+    return await this.prisma.userGuardians.deleteMany({
+      where: { recipientId, guardianId },
+    });
+  }
 }
