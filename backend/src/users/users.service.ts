@@ -42,6 +42,17 @@ export class UsersService {
     });
   }
 
+  async declineGuardianRoleByWallets(
+    recipientWallet: string,
+    guardianWallet: string
+  ) {
+    return this.prisma.userGuardians.deleteMany({
+      where: {
+        recipientWallet,
+        guardianWallet,
+      },
+    });
+  }
   async removeGuardianByWallet(
     recipientWallet: string,
     guardianWallet: string
