@@ -8,6 +8,50 @@ export class UsersService {
 
   private readonly logger = new Logger(UsersService.name);
 
+  // BLOCKCHAIN LISTENER METHODS
+
+  async proposeGuardianByWallet(
+    recipientWallet: string,
+    guardianWallet: string
+  ) {
+    await this.upsertUser(recipientWallet);
+    await this.upsertUser(guardianWallet);
+
+    return this.prisma.userGuardians.create({
+      data: {
+        recipientWallet: recipientWallet,
+        guardianWallet: guardianWallet,
+        status: 'pending',
+      },
+    });
+  }
+
+  async acceptGuardianRoleByWallets(
+    recipientWallet: string,
+    guardianWallet: string
+  ) {
+    return this.prisma.userGuardians.update({
+      where: {
+        // ← Fyll i här! Hur hittar du raden med båda wallet-adresserna?
+        recipientWallet_guardianWallet: {
+          recipientWallet,
+          guardianWallet,
+        },
+      },
+      data: { status: 'active' },
+    });
+  }
+
+  async removeGuardianByWallet(
+    recipientWallet: string,
+    guardianWallet: string
+  ) {
+    return await this.prisma.userGuardians.deleteMany({
+      where: { recipientWallet, guardianWallet: guardianWallet },
+    });
+  }
+
+  // API CONTROLLER METHODS
   async findAll() {
     return this.prisma.users.findMany();
   }
@@ -15,7 +59,7 @@ export class UsersService {
   async findOne(id: string) {
     const user = await this.prisma.users.findUnique({
       where: {
-        id,
+        walletAddress: id,
       },
     });
 
@@ -35,7 +79,7 @@ export class UsersService {
   async update(id: string, updateData: Prisma.UsersUpdateInput) {
     try {
       return await this.prisma.users.update({
-        where: { id },
+        where: { walletAddress: id },
         data: updateData,
       });
     } catch (error: any) {
@@ -48,7 +92,7 @@ export class UsersService {
 
   async remove(id: string) {
     try {
-      return await this.prisma.users.delete({ where: { id } });
+      return await this.prisma.users.delete({ where: { walletAddress: id } });
     } catch (error: any) {
       if (error.code === 'P2025') {
         throw new NotFoundException(`User with ID ${id} not found`);
@@ -57,20 +101,10 @@ export class UsersService {
     }
   }
 
-  async proposeGuardian(recipientId: string, guardianId: string) {
-    return this.prisma.userGuardians.create({
-      data: {
-        recipientId,
-        guardianId,
-        status: 'pending',
-      },
-    });
-  }
-
   async getGuardians(userId: string) {
     const user = await this.prisma.userGuardians.findMany({
       where: {
-        recipientId: userId,
+        recipientWallet: userId,
       },
     });
 
@@ -89,10 +123,19 @@ export class UsersService {
       where: { id: guardianRelationId },
     });
   }
-
-  async removeGuardian(recipientId: string, guardianId: string) {
-    return await this.prisma.userGuardians.deleteMany({
-      where: { recipientId, guardianId },
+  async upsertUser(walletAddress: string) {
+    let user = await this.prisma.users.findUnique({
+      where: { walletAddress },
     });
+
+    if (!user) {
+      user = await this.prisma.users.create({
+        data: {
+          walletAddress,
+        },
+      });
+    }
+
+    return user;
   }
 }

@@ -7,15 +7,15 @@ import { CreatePaymentDto } from './dto/create-payment.dto';
 export class PaymentsService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll(senderId?: string, recipientId?: string) {
+  async findAll(senderWallet?: string, recipientWallet?: string) {
     const where: any = {};
 
-    if (senderId) {
-      where.senderId = senderId;
+    if (senderWallet) {
+      where.senderWallet = senderWallet;
     }
 
-    if (recipientId) {
-      where.recipientId = recipientId;
+    if (recipientWallet) {
+      where.recipientWallet = recipientWallet;
     }
 
     return this.prisma.payments.findMany({
@@ -35,11 +35,11 @@ export class PaymentsService {
     });
   }
 
-  async create(dto: CreatePaymentDto, senderId: string) {
+  async create(dto: CreatePaymentDto, senderWallet: string) {
     const payment = await this.prisma.payments.create({
       data: {
-        senderId: senderId,
-        recipientId: dto.recipientId,
+        senderWallet: senderWallet,
+        recipientWallet: dto.recipientWallet,
         amount: dto.amount,
         tokenAddress: dto.tokenAddress,
         message: dto.message,
@@ -49,7 +49,7 @@ export class PaymentsService {
 
     const guardians = await this.prisma.userGuardians.findMany({
       where: {
-        recipientId: dto.recipientId,
+        recipientWallet: dto.recipientWallet,
         status: 'active',
       },
     });
@@ -57,19 +57,19 @@ export class PaymentsService {
     await this.prisma.paymentApprovals.createMany({
       data: guardians.map((guardian) => ({
         paymentId: payment.id,
-        guardianId: guardian.guardianId,
+        guardianWallet: guardian.guardianWallet,
         approved: false,
       })),
     });
 
     return payment;
   }
-  async approve(paymentId: string, guardianId: string) {
+  async approve(paymentId: string, guardianWallet: string) {
     const approval = await this.prisma.paymentApprovals.update({
       where: {
-        paymentId_guardianId: {
+        paymentId_guardianWallet: {
           paymentId: paymentId,
-          guardianId: guardianId,
+          guardianWallet: guardianWallet,
         },
       },
       data: {
@@ -109,13 +109,13 @@ export class PaymentsService {
     });
   }
 
-  async reject(paymentId: string, guardianId: string) {
+  async reject(paymentId: string, guardianWallet: string) {
     // 1. Uppdatera approval till false
     const approval = await this.prisma.paymentApprovals.update({
       where: {
-        paymentId_guardianId: {
+        paymentId_guardianWallet: {
           paymentId: paymentId,
-          guardianId: guardianId,
+          guardianWallet: guardianWallet,
         },
       },
       data: {

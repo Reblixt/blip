@@ -16,10 +16,10 @@ export class PaymentsController {
 
   @Get()
   findAll(
-    @Query('senderId') senderId?: string,
-    @Query('recipientId') recipientId?: string
+    @Query('senderWallet') senderWallet?: string,
+    @Query('recipientWallet') recipientWallet?: string
   ) {
-    return this.paymentsService.findAll(senderId, recipientId);
+    return this.paymentsService.findAll(senderWallet, recipientWallet);
   }
 
   @Get(':id')
@@ -29,8 +29,8 @@ export class PaymentsController {
 
   @Post()
   create(@Body() dto: CreatePaymentDto) {
-    const senderId = 'cmhnsr9en0000uxgbbrnfyh7b'; // Placeholder
-    return this.paymentsService.create(dto, senderId);
+    const senderWallet = 'cmhnsr9en0000uxgbbrnfyh7b'; // Placeholder
+    return this.paymentsService.create(dto, senderWallet);
   }
 
   @Post(':id/approve')

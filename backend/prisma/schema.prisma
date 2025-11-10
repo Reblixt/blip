@@ -15,9 +15,9 @@ datasource db {
 }
 
 model Users {
-  id            String  @id @default(cuid())
+  // id            String  @id @default(cuid()) // ta bort id
+  walletAddress String @id
   email         String? @unique
-  walletAddress String? @unique
   name          String?
   password      String?
 
@@ -32,42 +32,44 @@ model Users {
 
 model UserGuardians {
   id          String   @id @default(cuid())
-  recipientId String
-  guardianId  String
+  recipientWallet String
+  guardianWallet  String
   status      String
   createdAt   DateTime @default(now())
 
-  recipient Users @relation("RecipientGuardians", fields: [recipientId], references: [id])
-  guardian  Users @relation("GuardianRelations", fields: [guardianId], references: [id])
+  recipient Users @relation("RecipientGuardians", fields: [recipientWallet], references: [walletAddress])
+  guardian  Users @relation("GuardianRelations", fields: [guardianWallet], references: [walletAddress])
 
-  @@unique([recipientId, guardianId])
+  @@unique([recipientWallet, guardianWallet])
 }
 
 model Payments {
   id               String   @id @default(cuid())
-  senderId         String
-  recipientId      String
+  senderWallet     String
+  recipientWallet  String
   amount           String
   tokenAddress     String?
   message          String?
   status           String
   blockchainTxHash String?
   createdAt        DateTime @default(now())
+  hasViewed        Boolean @default(false)
 
-  sender    Users              @relation("SentPayments", fields: [senderId], references: [id])
-  recipient Users              @relation("ReceivedPayments", fields: [recipientId], references: [id])
+  sender    Users              @relation("SentPayments", fields: [senderWallet], references: [walletAddress])
+  recipient Users              @relation("ReceivedPayments", fields: [recipientWallet], references: [walletAddress])
   approvals PaymentApprovals[]
 }
 
 model PaymentApprovals {
   id         String   @id @default(cuid())
   paymentId  String
-  guardianId String
+  guardianWallet String
   approved   Boolean
   createdAt  DateTime @default(now())
 
   payment  Payments @relation(fields: [paymentId], references: [id])
-  guardian Users    @relation("ApprovedPayments", fields: [guardianId], references: [id])
+  guardian Users    @relation("ApprovedPayments", fields: [guardianWallet], references: [walletAddress])
 
-  @@unique([paymentId, guardianId])
+  @@unique([paymentId, guardianWallet])
+  // @@index([createdAt])
 }

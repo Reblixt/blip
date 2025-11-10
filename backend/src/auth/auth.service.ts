@@ -42,7 +42,7 @@ export class AuthService {
 
       //Skapa JWT
       const payload = {
-        sub: user.id,
+        sub: user.walletAddress,
         walletAddress: walletAddress,
       };
 
@@ -51,7 +51,7 @@ export class AuthService {
       return {
         accessToken,
         user: {
-          id: user.id,
+          id: user.walletAddress,
           walletAddress,
           name: user.name,
         },

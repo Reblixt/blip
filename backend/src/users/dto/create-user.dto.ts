@@ -1,8 +1,12 @@
 import { IsEmail, IsString, IsOptional, MinLength } from 'class-validator';
 
 export class CreateUserDto {
+  @IsString()
+  walletAddress: string;
+
   @IsEmail()
-  email: string;
+  @IsOptional()
+  email?: string;
 
   @IsOptional()
   @IsString()

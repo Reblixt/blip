@@ -46,8 +46,8 @@ export class UsersController {
     @Param('userId') userId: string,
     @Body() createGuardianDto: CreateGuardianDto
   ) {
-    const guardianId = createGuardianDto.guardianId;
-    return this.usersService.proposeGuardian(userId, guardianId);
+    const guardianWallet = createGuardianDto.guardianWallet;
+    return this.usersService.proposeGuardianByWallet(userId, guardianWallet);
   }
 
   @Get(':userId/guardians')
@@ -65,11 +65,11 @@ export class UsersController {
     return this.usersService.declineGuardianRole(id);
   }
 
-  @Delete(':userId/guardians/:guardianId')
+  @Delete(':userId/guardians/:guardianWallet')
   async removeGuardian(
-    @Param('guardianId') guardianId: string,
+    @Param('guardianWallet') guardianWallet: string,
     @Param('userId') userId: string
   ) {
-    return this.usersService.removeGuardian(userId, guardianId);
+    return this.usersService.removeGuardianByWallet(userId, guardianWallet);
   }
 }
