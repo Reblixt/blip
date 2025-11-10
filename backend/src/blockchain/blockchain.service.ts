@@ -111,7 +111,7 @@ export class BlockchainService implements OnModuleInit {
           )}`
         );
 
-        await this.usersService.declineGuardianRoleByWallets(
+        await this.usersService.removeGuardianRelationByWallets(
           recipient,
           guardian
         );
@@ -128,7 +128,7 @@ export class BlockchainService implements OnModuleInit {
       abi: blipAbi,
       address: '0x5FbDB2315678afecb367f032d93F642f64180aa3' as Address,
       eventName: 'GuardianProposalCancelled',
-      onLogs: (log) => {
+      onLogs: async (log) => {
         const recipient = log[0].args.recipient;
         const guardian = log[0].args.guardian;
 
@@ -145,6 +145,10 @@ export class BlockchainService implements OnModuleInit {
             2
           )}`
         );
+        await this.usersService.removeGuardianRelationByWallets(
+          recipient,
+          guardian
+        );
       },
 
       onError: (error) => {
@@ -158,7 +162,7 @@ export class BlockchainService implements OnModuleInit {
       abi: blipAbi,
       address: '0x5FbDB2315678afecb367f032d93F642f64180aa3' as Address,
       eventName: 'GuardianLeftRole',
-      onLogs: (log) => {
+      onLogs: async (log) => {
         const recipient = log[0].args.recipient;
         const guardian = log[0].args.guardian;
 
@@ -175,6 +179,10 @@ export class BlockchainService implements OnModuleInit {
             2
           )}`
         );
+        await this.usersService.removeGuardianRelationByWallets(
+          recipient,
+          guardian
+        );
       },
 
       onError: (error) => {
@@ -188,7 +196,7 @@ export class BlockchainService implements OnModuleInit {
       abi: blipAbi,
       address: '0x5FbDB2315678afecb367f032d93F642f64180aa3' as Address,
       eventName: 'GuardianRemoved',
-      onLogs: (log) => {
+      onLogs: async (log) => {
         const recipient = log[0].args.recipientAddress;
         const guardian = log[0].args.guardianAddress;
 
@@ -204,6 +212,10 @@ export class BlockchainService implements OnModuleInit {
               typeof value === 'bigint' ? value.toString() : value,
             2
           )}`
+        );
+        await this.usersService.removeGuardianRelationByWallets(
+          recipient,
+          guardian
         );
       },
 

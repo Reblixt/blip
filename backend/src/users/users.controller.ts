@@ -70,6 +70,9 @@ export class UsersController {
     @Param('guardianWallet') guardianWallet: string,
     @Param('userId') userId: string
   ) {
-    return this.usersService.removeGuardianByWallet(userId, guardianWallet);
+    return this.usersService.removeGuardianRelationByWallets(
+      userId,
+      guardianWallet
+    );
   }
 }

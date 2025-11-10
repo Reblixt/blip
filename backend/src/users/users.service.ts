@@ -42,23 +42,12 @@ export class UsersService {
     });
   }
 
-  async declineGuardianRoleByWallets(
+  async removeGuardianRelationByWallets(
     recipientWallet: string,
     guardianWallet: string
   ) {
     return this.prisma.userGuardians.deleteMany({
-      where: {
-        recipientWallet,
-        guardianWallet,
-      },
-    });
-  }
-  async removeGuardianByWallet(
-    recipientWallet: string,
-    guardianWallet: string
-  ) {
-    return await this.prisma.userGuardians.deleteMany({
-      where: { recipientWallet, guardianWallet: guardianWallet },
+      where: { recipientWallet, guardianWallet },
     });
   }
 
