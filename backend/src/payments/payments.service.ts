@@ -160,29 +160,17 @@ export class PaymentsService {
     return updatedPayment;
   }
 
-  async cancel(paymentId: string) {
-    const payment = await this.prisma.payments.findUnique({
-      where: { id: paymentId },
-    });
-
-    if (payment.status !== 'pending') {
-      throw new Error('Only pending payments can be cancelled');
-    }
-
-    await this.prisma.payments.update({
-      where: { id: paymentId },
-      data: {
-        status: 'refunded',
-      },
-    });
-
-    return this.prisma.payments.findUnique({
-      where: { id: paymentId },
+  async refundPaymentByContractId(contractId: number) {
+    const updatedPayment = await this.prisma.payments.update({
+      where: { contractId },
+      data: { status: 'refunded' },
       include: {
         sender: true,
         recipient: true,
         approvals: true,
       },
     });
+
+    return updatedPayment;
   }
 }
