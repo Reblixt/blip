@@ -45,6 +45,7 @@ model UserGuardians {
 
 model Payments {
   id               String   @id @default(cuid())
+  contractId       Int?     @unique
   senderWallet     String
   recipientWallet  String
   amount           String
@@ -53,7 +54,7 @@ model Payments {
   status           String
   blockchainTxHash String?
   createdAt        DateTime @default(now())
-  hasViewed        Boolean @default(false)
+  hasViewed        Boolean  @default(false)
 
   sender    Users              @relation("SentPayments", fields: [senderWallet], references: [walletAddress])
   recipient Users              @relation("ReceivedPayments", fields: [recipientWallet], references: [walletAddress])
