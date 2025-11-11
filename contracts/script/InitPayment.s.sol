@@ -9,7 +9,7 @@ contract InitPaymentScript is Script {
     // NOTE:
     // forge script script/InitPayment.s.sol --rpc-url http://127.0.0.1:8545 --broadcast
 
-    address constant CONTRACT_ADDRESS = 0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0;
+    address constant CONTRACT_ADDRESS = 0x5FbDB2315678afecb367f032d93F642f64180aa3;
 
     uint256 constant SENDER_CHARLIE_PRIVATE_KEY = 0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a;
 

@@ -114,6 +114,18 @@ export class PaymentsService {
     });
   }
 
+  async approveByContractId(contractId: number, guardianWallet: string) {
+    const payment = await this.prisma.payments.findUnique({
+      where: { contractId: contractId },
+    });
+
+    if (!payment) {
+      throw new Error(`Payment with contractId ${contractId} not found`);
+    }
+
+    return this.approve(payment.id, guardianWallet);
+  }
+
   async reject(paymentId: string, guardianWallet: string) {
     const approval = await this.prisma.paymentApprovals.update({
       where: {

@@ -26,7 +26,7 @@ export class BlockchainService implements OnModuleInit {
 
     this.viem.watchContractEvent({
       abi: blipAbi,
-      address: '0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0' as Address,
+      address: '0x5FbDB2315678afecb367f032d93F642f64180aa3' as Address,
       eventName: 'GuardianProposed',
       onLogs: async (log) => {
         const recipient = log[0].args.recipient;
@@ -59,7 +59,7 @@ export class BlockchainService implements OnModuleInit {
 
     this.viem.watchContractEvent({
       abi: blipAbi,
-      address: '0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0' as Address,
+      address: '0x5FbDB2315678afecb367f032d93F642f64180aa3' as Address,
       eventName: 'GuardianAdded',
       onLogs: async (log) => {
         const recipient = log[0].args.recipientAddress;
@@ -94,7 +94,7 @@ export class BlockchainService implements OnModuleInit {
 
     this.viem.watchContractEvent({
       abi: blipAbi,
-      address: '0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0' as Address,
+      address: '0x5FbDB2315678afecb367f032d93F642f64180aa3' as Address,
       eventName: 'GuardianDeclinedRole',
       onLogs: async (log) => {
         const recipient = log[0].args.recipient;
@@ -129,7 +129,7 @@ export class BlockchainService implements OnModuleInit {
 
     this.viem.watchContractEvent({
       abi: blipAbi,
-      address: '0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0' as Address,
+      address: '0x5FbDB2315678afecb367f032d93F642f64180aa3' as Address,
       eventName: 'GuardianProposalCancelled',
       onLogs: async (log) => {
         const recipient = log[0].args.recipient;
@@ -163,7 +163,7 @@ export class BlockchainService implements OnModuleInit {
 
     this.viem.watchContractEvent({
       abi: blipAbi,
-      address: '0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0' as Address,
+      address: '0x5FbDB2315678afecb367f032d93F642f64180aa3' as Address,
       eventName: 'GuardianLeftRole',
       onLogs: async (log) => {
         const recipient = log[0].args.recipient;
@@ -197,7 +197,7 @@ export class BlockchainService implements OnModuleInit {
 
     this.viem.watchContractEvent({
       abi: blipAbi,
-      address: '0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0' as Address,
+      address: '0x5FbDB2315678afecb367f032d93F642f64180aa3' as Address,
       eventName: 'GuardianRemoved',
       onLogs: async (log) => {
         const recipient = log[0].args.recipientAddress;
@@ -235,7 +235,7 @@ export class BlockchainService implements OnModuleInit {
 
     this.viem.watchContractEvent({
       abi: blipAbi,
-      address: '0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0' as Address,
+      address: '0x5FbDB2315678afecb367f032d93F642f64180aa3' as Address,
       eventName: 'PaymentInitiated',
       onLogs: async (log) => {
         const paymentId = log[0].args.paymentId;
@@ -305,14 +305,20 @@ export class BlockchainService implements OnModuleInit {
 
     this.viem.watchContractEvent({
       abi: blipAbi,
-      address: '0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0' as Address,
+      address: '0x5FbDB2315678afecb367f032d93F642f64180aa3' as Address,
       eventName: 'PaymentSigned',
-      onLogs: (log) => {
+      onLogs: async (log) => {
+        const paymentId = log[0].args.paymentId;
         const signer = log[0].args.signerAddress;
         const amount = log[0].args.amount;
 
         this.logger.debug(
-          `PaymentSigned event detected: Signer - ${JSON.stringify(
+          `PaymentSigned event detected: PaymentId - ${JSON.stringify(
+            paymentId,
+            (key, value) =>
+              typeof value === 'bigint' ? value.toString() : value,
+            2
+          )},Signer - ${JSON.stringify(
             signer,
             (key, value) =>
               typeof value === 'bigint' ? value.toString() : value,
@@ -323,6 +329,10 @@ export class BlockchainService implements OnModuleInit {
               typeof value === 'bigint' ? value.toString() : value,
             2
           )}`
+        );
+        await this.paymentsService.approveByContractId(
+          Number(paymentId),
+          signer
         );
       },
 
@@ -335,7 +345,7 @@ export class BlockchainService implements OnModuleInit {
 
     this.viem.watchContractEvent({
       abi: blipAbi,
-      address: '0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0' as Address,
+      address: '0x5FbDB2315678afecb367f032d93F642f64180aa3' as Address,
       eventName: 'PaymentReleased',
       onLogs: (log) => {
         const recipient = log[0].args.recipientAddress;
@@ -365,7 +375,7 @@ export class BlockchainService implements OnModuleInit {
 
     this.viem.watchContractEvent({
       abi: blipAbi,
-      address: '0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0' as Address,
+      address: '0x5FbDB2315678afecb367f032d93F642f64180aa3' as Address,
       eventName: 'PaymentRejected',
       onLogs: (log) => {
         const signer = log[0].args.signerAddress;
@@ -395,7 +405,7 @@ export class BlockchainService implements OnModuleInit {
 
     this.viem.watchContractEvent({
       abi: blipAbi,
-      address: '0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0' as Address,
+      address: '0x5FbDB2315678afecb367f032d93F642f64180aa3' as Address,
       eventName: 'PaymentRefunded',
 
       onLogs: (log) => {
