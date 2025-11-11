@@ -55,11 +55,11 @@ contract Blip {
     );
     event GuardianRemoved(address recipientAddress, address guardianAddress);
 
-    event PaymentInitiated(address indexed senderAddress, address indexed recipient, uint amount, address tokenAddress,  string message);
-    event PaymentSigned(address signerAddress, uint amount);
-    event PaymentRejected(address signerAddress, uint amount);
-    event PaymentRefunded(address senderAddress, uint amount);
-    event PaymentReleased(address recipientAddress, uint amount);
+    event PaymentInitiated(uint256 indexed paymentId, address indexed senderAddress, address indexed recipient, uint amount, address tokenAddress,  string message);
+    event PaymentSigned(uint256 indexed paymentId, address signerAddress, uint amount);
+    event PaymentRejected(uint256 indexed paymentId, address signerAddress, uint amount);
+    event PaymentRefunded(uint256 indexed paymentId, address senderAddress, uint amount);
+    event PaymentReleased(uint256 indexed paymentId, address recipientAddress, uint amount);
 
     enum PaymentStatus {
         Pending,
@@ -154,7 +154,7 @@ contract Blip {
         // borde createPayment anropa releasePayment() om guardianCount == 0?
 
         // Event-logg
-        emit PaymentInitiated(msg.sender, recipientAddress, _amount, _tokenAddress,_message);
+        emit PaymentInitiated(newPayment.id, msg.sender, recipientAddress, _amount, _tokenAddress,_message);
     }
 
     // function directPayment(string memory _message) external payable {
@@ -329,7 +329,7 @@ contract Blip {
         }
 
         // Event-logga att betalningen har godkännts
-        emit PaymentSigned(msg.sender, paymentAmount);
+        emit PaymentSigned(_paymentId, msg.sender, paymentAmount);
     }
 
     function releasePayment(uint256 _paymentId) internal {
@@ -370,7 +370,7 @@ contract Blip {
         payments[_paymentId].status = PaymentStatus.Completed;
 
         // Event-logga att betalningen har släppts
-        emit PaymentReleased(recipient, paymentAmount);
+        emit PaymentReleased(_paymentId, recipient, paymentAmount);
     }
 
     function hasApproved(
@@ -427,7 +427,7 @@ contract Blip {
         payments[_paymentId].status = PaymentStatus.SentBack;
 
         // Event-logga att betalningen har skickats tillbaka
-        emit PaymentRefunded(refundTo, refundAmount);
+        emit PaymentRefunded(_paymentId, refundTo, refundAmount);
     }
 
     function rejectPayment(uint256 _paymentId) external {
@@ -454,7 +454,7 @@ contract Blip {
         refundPayment(_paymentId);
 
         // Event-logga att betalningen har avvisats
-        emit PaymentRejected(msg.sender, paymentAmount);
+        emit PaymentRejected(_paymentId, msg.sender, paymentAmount);
     }
 
     function getPayment(
