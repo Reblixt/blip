@@ -238,14 +238,20 @@ export class BlockchainService implements OnModuleInit {
       address: '0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0' as Address,
       eventName: 'PaymentInitiated',
       onLogs: async (log) => {
+        const paymentId = log[0].args.paymentId;
         const sender = log[0].args.senderAddress;
-        const recipient = log[0].args.recipient; // ← Fyll i!
-        const amount = log[0].args.amount; // ← Fyll i!
-        const tokenAddress = log[0].args.tokenAddress; // ← Fyll i!
-        const message = log[0].args.message; // ← Fyll i!
+        const recipient = log[0].args.recipient;
+        const amount = log[0].args.amount;
+        const tokenAddress = log[0].args.tokenAddress;
+        const message = log[0].args.message;
 
         this.logger.debug(
-          `PaymentInitiated event detected: Sender - ${JSON.stringify(
+          `PaymentInitiated event detected: paymentId - ${JSON.stringify(
+            paymentId,
+            (key, value) =>
+              typeof value === 'bigint' ? value.toString() : value,
+            2
+          )},Sender - ${JSON.stringify(
             sender,
             (key, value) =>
               typeof value === 'bigint' ? value.toString() : value,
@@ -284,7 +290,8 @@ export class BlockchainService implements OnModuleInit {
             tokenAddress: tokenAddress,
             message: message,
           },
-          sender
+          sender,
+          Number(paymentId)
         );
         this;
       },

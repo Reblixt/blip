@@ -35,9 +35,14 @@ export class PaymentsService {
     });
   }
 
-  async create(dto: CreatePaymentDto, senderWallet: string) {
+  async create(
+    dto: CreatePaymentDto,
+    senderWallet: string,
+    contractId?: number
+  ) {
     const payment = await this.prisma.payments.create({
       data: {
+        contractId: contractId,
         senderWallet: senderWallet,
         recipientWallet: dto.recipientWallet,
         amount: dto.amount,
