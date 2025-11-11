@@ -1,10 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {IERC20} from "forge-std/interfaces/IERC20.sol";
+// import {IERC20} from "forge-std/interfaces/IERC20.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 // Swish alternative
 contract Blip {
+    using SafeERC20 for IERC20;
+
     constructor() {
         recipientAddress = msg.sender;
     }
@@ -51,7 +55,7 @@ contract Blip {
     );
     event GuardianRemoved(address recipientAddress, address guardianAddress);
 
-    event PaymentInitiated(address senderAddress, uint amount);
+    event PaymentInitiated(address indexed senderAddress, address indexed recipient, uint amount, address tokenAddress,  string message);
     event PaymentSigned(address signerAddress, uint amount);
     event PaymentRejected(address signerAddress, uint amount);
     event PaymentRefunded(address senderAddress, uint amount);
@@ -115,9 +119,42 @@ contract Blip {
         // Om 0-address, ej gilting
         if (_tokenAddress == address(0)) revert InvalidAddress();
 
-        IERC20(_tokenAddress).transferFrom(msg.sender, address(this), _amount);
+        // IERC20(_tokenAddress).transferFrom(msg.sender, address(this), _amount);
+
+          IERC20(_tokenAddress).safeTransferFrom(msg.sender, address(this), _amount);
 
         _createPayment(_tokenAddress, _amount, _message);
+    }
+
+        function _createPayment(
+        address _tokenAddress,
+        uint256 _amount,
+        string memory _message
+    ) internal {
+        // Hämta referens till betalningen i storage
+        Payment storage newPayment = payments[paymentCounter];
+        newPayment.id = paymentCounter;
+        newPayment.sender = msg.sender;
+        newPayment.tokenAddress = _tokenAddress;
+        newPayment.receiver = recipientAddress;
+        newPayment.amount = _amount;
+        newPayment.message = _message;
+        newPayment.timestamp = block.timestamp;
+        newPayment.status = PaymentStatus.Pending;
+
+        for (uint i = 0; i < guardians.length; i++) {
+            newPayment.requiredApprovals[guardians[i]] = true;
+        }
+
+        newPayment.guardianCount = guardians.length;
+        newPayment.approvalCount = 0;
+
+        paymentCounter++;
+
+        // borde createPayment anropa releasePayment() om guardianCount == 0?
+
+        // Event-logg
+        emit PaymentInitiated(msg.sender, recipientAddress, _amount, _tokenAddress,_message);
     }
 
     // function directPayment(string memory _message) external payable {
@@ -168,37 +205,6 @@ contract Blip {
 
     //     emit PaymentReleased(recipientAddress, _amount);
     // }
-
-    function _createPayment(
-        address _tokenAddress,
-        uint256 _amount,
-        string memory _message
-    ) internal {
-        // Hämta referens till betalningen i storage
-        Payment storage newPayment = payments[paymentCounter];
-        newPayment.id = paymentCounter;
-        newPayment.sender = msg.sender;
-        newPayment.tokenAddress = _tokenAddress;
-        newPayment.receiver = recipientAddress;
-        newPayment.amount = _amount;
-        newPayment.message = _message;
-        newPayment.timestamp = block.timestamp;
-        newPayment.status = PaymentStatus.Pending;
-
-        for (uint i = 0; i < guardians.length; i++) {
-            newPayment.requiredApprovals[guardians[i]] = true;
-        }
-
-        newPayment.guardianCount = guardians.length;
-        newPayment.approvalCount = 0;
-
-        paymentCounter++;
-
-        // borde createPayment anropa releasePayment() om guardianCount == 0?
-
-        // Event-logg
-        emit PaymentInitiated(msg.sender, _amount);
-    }
 
     function proposeGuardian(address newGuardian) external onlyRecipient {
         // Ogiltig address
@@ -358,7 +364,7 @@ contract Blip {
                 InsufficientContractBalance()
             );
             // Skicka
-            paymentToken.transfer(recipient, paymentAmount);
+            paymentToken.safeTransfer(recipient, paymentAmount);
         }
 
         payments[_paymentId].status = PaymentStatus.Completed;
@@ -414,7 +420,7 @@ contract Blip {
                 InsufficientContractBalance()
             );
             // Skicka
-            paymentToken.transfer(refundTo, refundAmount);
+            paymentToken.safeTransfer(refundTo, refundAmount);
         }
 
         // Uppdatera betalningsstatus

@@ -110,7 +110,6 @@ export class PaymentsService {
   }
 
   async reject(paymentId: string, guardianWallet: string) {
-    // 1. Uppdatera approval till false
     const approval = await this.prisma.paymentApprovals.update({
       where: {
         paymentId_guardianWallet: {

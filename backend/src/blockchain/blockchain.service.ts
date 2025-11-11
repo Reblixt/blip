@@ -3,6 +3,7 @@ import { blipAbi } from 'constants/contract';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { VIEM_PROVIDER, ViemProvider } from 'src/provider/provider.viem';
 import { UsersService } from 'src/users/users.service';
+import { PaymentsService } from 'src/payments/payments.service';
 import { Address } from 'viem';
 
 @Injectable()
@@ -10,7 +11,8 @@ export class BlockchainService implements OnModuleInit {
   constructor(
     @Inject(VIEM_PROVIDER) private readonly viem: ViemProvider,
     private readonly prisma: PrismaService,
-    private readonly usersService: UsersService
+    private readonly usersService: UsersService,
+    private readonly paymentsService: PaymentsService
   ) {}
   private readonly logger = new Logger(BlockchainService.name);
 
@@ -43,7 +45,8 @@ export class BlockchainService implements OnModuleInit {
             2
           )}`
         );
-
+        await this.usersService.upsertUser(recipient);
+        await this.usersService.upsertUser(guardian);
         await this.usersService.proposeGuardianByWallet(recipient, guardian);
       },
 
@@ -234,9 +237,12 @@ export class BlockchainService implements OnModuleInit {
       abi: blipAbi,
       address: '0x5FbDB2315678afecb367f032d93F642f64180aa3' as Address,
       eventName: 'PaymentInitiated',
-      onLogs: (log) => {
+      onLogs: async (log) => {
         const sender = log[0].args.senderAddress;
-        const amount = log[0].args.amount;
+        const recipient = log[0].args.recipient; // ← Fyll i!
+        const amount = log[0].args.amount; // ← Fyll i!
+        const tokenAddress = log[0].args.tokenAddress; // ← Fyll i!
+        const message = log[0].args.message; // ← Fyll i!
 
         this.logger.debug(
           `PaymentInitiated event detected: Sender - ${JSON.stringify(
@@ -249,8 +255,38 @@ export class BlockchainService implements OnModuleInit {
             (key, value) =>
               typeof value === 'bigint' ? value.toString() : value,
             2
-          )}`
+          )},
+          )}, Recipient - ${JSON.stringify(
+            recipient,
+            (key, value) =>
+              typeof value === 'bigint' ? value.toString() : value,
+            2
+          )},
+          )}, Message - ${JSON.stringify(
+            message,
+            (key, value) =>
+              typeof value === 'bigint' ? value.toString() : value,
+            2
+          )},
+          )}, TokenAddress - ${JSON.stringify(
+            tokenAddress,
+            (key, value) =>
+              typeof value === 'bigint' ? value.toString() : value,
+            2
+          )},`
         );
+        await this.usersService.upsertUser(sender);
+        await this.usersService.upsertUser(recipient);
+        await this.paymentsService.create(
+          {
+            recipientWallet: recipient,
+            amount: amount.toString(),
+            tokenAddress: tokenAddress,
+            message: message,
+          },
+          sender
+        );
+        this;
       },
 
       onError: (error) => {

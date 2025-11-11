@@ -14,13 +14,17 @@ export class UsersService {
     recipientWallet: string,
     guardianWallet: string
   ) {
-    await this.upsertUser(recipientWallet);
-    await this.upsertUser(guardianWallet);
-
-    return this.prisma.userGuardians.create({
-      data: {
-        recipientWallet: recipientWallet,
-        guardianWallet: guardianWallet,
+    return this.prisma.userGuardians.upsert({
+      where: {
+        recipientWallet_guardianWallet: {
+          recipientWallet,
+          guardianWallet,
+        },
+      },
+      update: {},
+      create: {
+        recipientWallet,
+        guardianWallet,
         status: 'pending',
       },
     });
@@ -32,7 +36,6 @@ export class UsersService {
   ) {
     return this.prisma.userGuardians.update({
       where: {
-        // ← Fyll i här! Hur hittar du raden med båda wallet-adresserna?
         recipientWallet_guardianWallet: {
           recipientWallet,
           guardianWallet,
@@ -124,18 +127,10 @@ export class UsersService {
     });
   }
   async upsertUser(walletAddress: string) {
-    let user = await this.prisma.users.findUnique({
+    return this.prisma.users.upsert({
       where: { walletAddress },
+      update: {},
+      create: { walletAddress },
     });
-
-    if (!user) {
-      user = await this.prisma.users.create({
-        data: {
-          walletAddress,
-        },
-      });
-    }
-
-    return user;
   }
 }

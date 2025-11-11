@@ -5,11 +5,13 @@ import {Script} from "forge-std/Script.sol";
 import {Blip} from "../src/Blip.sol";
 import {console} from "forge-std/console.sol";
 
-contract CounterScript is Script {
+contract AcceptGuardianScript is Script {
     //NOTE:
     //forge script script/acceptGuardian.s.sol --rpc-url http://127.0.0.1:8545 --broadcast
 
-    uint256 PRIVATE_KEY = 0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d;
+    address constant CONTRACT_ADDRESS = 0x5FbDB2315678afecb367f032d93F642f64180aa3;
+
+    uint256 constant GUARDIAN_BOB_PRIVATE_KEY = 0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d;
 
     Blip public blip;
 
@@ -18,12 +20,14 @@ contract CounterScript is Script {
     function setUp() public {}
 
     function run() public {
-        vm.startBroadcast(PRIVATE_KEY);
+        vm.startBroadcast(GUARDIAN_BOB_PRIVATE_KEY);
 
-        blip = Blip(payable(address(0x5FbDB2315678afecb367f032d93F642f64180aa3)));
+        blip = Blip(payable(CONTRACT_ADDRESS));
         blip.acceptGuardianRole();
-        console.log("Owner/sender", msg.sender);
-        console.log("contract address", address(blip));
+
+        console.log("Guardian accepts guardian role");
+        console.log("Guardian address", msg.sender);
+        console.log("contract address", CONTRACT_ADDRESS);
 
         vm.stopBroadcast();
     }
