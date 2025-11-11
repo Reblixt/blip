@@ -1,3 +1,4 @@
+import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from 'generated/prisma/client';
@@ -69,6 +70,7 @@ export class PaymentsService {
 
     return payment;
   }
+
   async approve(paymentId: string, guardianWallet: string) {
     const approval = await this.prisma.paymentApprovals.update({
       where: {
@@ -124,6 +126,24 @@ export class PaymentsService {
     }
 
     return this.approve(payment.id, guardianWallet);
+  }
+
+  async releasePayment(contractId: number) {
+    const payment = await this.prisma.payments.findUnique({
+      where: { contractId },
+    });
+
+    const updatedPayment = await this.prisma.payments.update({
+      where: { id: payment.id },
+      data: { status: 'released' },
+      include: {
+        sender: true,
+        recipient: true,
+        approvals: true,
+      },
+    });
+
+    return updatedPayment;
   }
 
   async reject(paymentId: string, guardianWallet: string) {

@@ -347,12 +347,18 @@ export class BlockchainService implements OnModuleInit {
       abi: blipAbi,
       address: '0x5FbDB2315678afecb367f032d93F642f64180aa3' as Address,
       eventName: 'PaymentReleased',
-      onLogs: (log) => {
+      onLogs: async (log) => {
+        const paymentId = log[0].args.paymentId;
         const recipient = log[0].args.recipientAddress;
         const amount = log[0].args.amount;
 
         this.logger.debug(
-          `PaymentReleased event detected: Recipient - ${JSON.stringify(
+          `PaymentReleased event detected: paymentId - ${JSON.stringify(
+            paymentId,
+            (key, value) =>
+              typeof value === 'bigint' ? value.toString() : value,
+            2
+          )}, Recipient - ${JSON.stringify(
             recipient,
             (key, value) =>
               typeof value === 'bigint' ? value.toString() : value,
@@ -364,6 +370,7 @@ export class BlockchainService implements OnModuleInit {
             2
           )}`
         );
+        await this.paymentsService.releasePayment(Number(paymentId));
       },
 
       onError: (error) => {

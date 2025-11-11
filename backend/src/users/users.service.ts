@@ -55,6 +55,7 @@ export class UsersService {
   }
 
   // API CONTROLLER METHODS
+
   async findAll() {
     return this.prisma.users.findMany();
   }
