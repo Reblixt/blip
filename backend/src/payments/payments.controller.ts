@@ -38,10 +38,10 @@ export class PaymentsController {
     return this.paymentsService.approve(id, guardianId);
   }
 
-  @Post(':id/reject')
-  reject(@Param('id') id: string, @Body('guardianId') guardianId: string) {
-    return this.paymentsService.reject(id, guardianId);
-  }
+  // @Post(':id/reject')
+  // reject(@Param('id') id: string, @Body('guardianId') guardianId: string) {
+  //   return this.paymentsService.reject(id, guardianId);
+  // }
 
   @Patch(':id/cancel')
   cancel(@Param('id') id: string) {

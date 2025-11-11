@@ -146,34 +146,18 @@ export class PaymentsService {
     return updatedPayment;
   }
 
-  async reject(paymentId: string, guardianWallet: string) {
-    const approval = await this.prisma.paymentApprovals.update({
-      where: {
-        paymentId_guardianWallet: {
-          paymentId: paymentId,
-          guardianWallet: guardianWallet,
-        },
-      },
-      data: {
-        approved: false,
-      },
-    });
-
-    await this.prisma.payments.update({
-      where: { id: paymentId },
-      data: {
-        status: 'rejected',
-      },
-    });
-
-    return this.prisma.payments.findUnique({
-      where: { id: paymentId },
+  async rejectByContractId(contractId: number) {
+    const updatedPayment = await this.prisma.payments.update({
+      where: { contractId },
+      data: { status: 'rejected' },
       include: {
         sender: true,
         recipient: true,
         approvals: true,
       },
     });
+
+    return updatedPayment;
   }
 
   async cancel(paymentId: string) {
