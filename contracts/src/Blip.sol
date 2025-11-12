@@ -386,11 +386,13 @@ contract Blip {
             payments[_paymentId].status == PaymentStatus.Pending,
             PaymentNotPending()
         );
+
+        uint paymentAmount = payments[_paymentId].amount; 
         // Anropa internal helper
-        refundPayment(_paymentId);
+        refundPayment(_paymentId, paymentAmount);
     }
 
-    function refundPayment(uint256 _paymentId) internal {
+    function refundPayment(uint256 _paymentId, uint256 _amount) internal {
         // Kontrollera att betalningen faktiskt är Pending eller Rejected
         require(
             payments[_paymentId].status == PaymentStatus.Pending ||
@@ -398,7 +400,6 @@ contract Blip {
             PaymentNotPending()
         );
 
-        uint refundAmount = payments[_paymentId].amount;
         address refundTo = payments[_paymentId].sender; // spara till event
         address tokenAddress = payments[_paymentId].tokenAddress;
 
@@ -407,27 +408,27 @@ contract Blip {
         if (tokenAddress == address(0)) {
             // Har kontraktet tillräckligt med pengar?
             require(
-                address(this).balance >= refundAmount,
+                address(this).balance >= _amount,
                 InsufficientContractBalance()
             );
             // Skicka
-            payable(refundTo).transfer(refundAmount);
+            payable(refundTo).transfer(_amount);
         } else {
             IERC20 paymentToken = IERC20(tokenAddress);
             // Har kontraktet tillräckligt med pengar?
             require(
-                paymentToken.balanceOf(address(this)) >= refundAmount,
+                paymentToken.balanceOf(address(this)) >= _amount,
                 InsufficientContractBalance()
             );
             // Skicka
-            paymentToken.safeTransfer(refundTo, refundAmount);
+            paymentToken.safeTransfer(refundTo, _amount);
         }
 
         // Uppdatera betalningsstatus
         payments[_paymentId].status = PaymentStatus.SentBack;
 
         // Event-logga att betalningen har skickats tillbaka
-        emit PaymentRefunded(_paymentId, refundTo, refundAmount);
+        emit PaymentRefunded(_paymentId, refundTo, _amount);
     }
 
     function rejectPayment(uint256 _paymentId) external {
@@ -454,7 +455,7 @@ contract Blip {
         emit PaymentRejected(_paymentId, msg.sender, paymentAmount);
 
         // Skicka tillbaka pengarna till avsändaren
-        refundPayment(_paymentId);
+        refundPayment(_paymentId, paymentAmount);
     }
 
     function getPayment(
