@@ -450,11 +450,11 @@ contract Blip {
         // Sätt betalningsstatus till rejected
         payments[_paymentId].status = PaymentStatus.Rejected;
 
-        // Skicka tillbaka pengarna till avsändaren
-        refundPayment(_paymentId);
-
         // Event-logga att betalningen har avvisats
         emit PaymentRejected(_paymentId, msg.sender, paymentAmount);
+
+        // Skicka tillbaka pengarna till avsändaren
+        refundPayment(_paymentId);
     }
 
     function getPayment(
