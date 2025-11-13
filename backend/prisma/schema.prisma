@@ -34,7 +34,7 @@ model UserGuardians {
   id          String   @id @default(cuid())
   recipientWallet String
   guardianWallet  String
-  status      String
+  status      String //pending active declined cancelled removed left
   createdAt   DateTime @default(now())
 
   recipient Users @relation("RecipientGuardians", fields: [recipientWallet], references: [walletAddress])
