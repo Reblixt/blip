@@ -1,3 +1,6 @@
+// components/ui/Badge.tsx
+import { Circle } from 'lucide-react';
+
 interface BadgeProps {
   status: string;
 }
@@ -6,26 +9,43 @@ export function Badge({ status }: BadgeProps) {
   const getStatusStyles = (status: string) => {
     switch (status) {
       case 'active':
-        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+        return {
+          color: 'text-green-500 dark:text-green-400',
+          glow: 'shadow-[0_0_8px_rgba(34,197,94,0.6)]',
+        };
       case 'pending':
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
+        return {
+          color: 'text-yellow-500 dark:text-yellow-400',
+          glow: 'shadow-[0_0_8px_rgba(234,179,8,0.6)]',
+        };
+      case 'declined':
+      case 'cancelled':
+        return {
+          color: 'text-red-500 dark:text-red-400',
+          glow: 'shadow-[0_0_8px_rgba(239,68,68,0.6)]',
+        };
+      case 'removed':
+      case 'left':
+        return {
+          color: 'text-gray-400 dark:text-gray-500',
+          glow: '',
+        };
       default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
+        return {
+          color: 'text-gray-400 dark:text-gray-500',
+          glow: '',
+        };
     }
   };
 
+  const styles = getStatusStyles(status);
+
   return (
-    <span
-      className={`
-        text-xs
-        font-semibold
-        px-3
-        py-1
-        rounded-full
-        inline-block
-        ${getStatusStyles(status)}
-      `}>
-      {status.toUpperCase()}
-    </span>
+    <div className='flex flex-col items-center gap-1'>
+      <div className={`${styles.glow} rounded-full`}>
+        <Circle className={`${styles.color} fill-current`} size={12} />
+      </div>
+      <span className={`text-xs ${styles.color}`}>{status.toUpperCase()}</span>
+    </div>
   );
 }
