@@ -1,5 +1,5 @@
 'use client';
-
+import { Badge } from '../UI/Badge';
 import { useState, useEffect } from 'react';
 
 interface Guardian {
