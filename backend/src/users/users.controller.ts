@@ -75,4 +75,15 @@ export class UsersController {
       guardianWallet
     );
   }
+
+  @Delete(':userId/guardians/:guardianRelationId')
+  async removeGuardianByWallets(
+    @Param('guardianRelationId') guardianWallet: string,
+    @Param('userId') recipientWallet: string
+  ) {
+    return this.usersService.removeGuardianRelationByWallets(
+      recipientWallet,
+      guardianWallet
+    );
+  }
 }
