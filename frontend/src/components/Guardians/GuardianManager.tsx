@@ -1,6 +1,7 @@
 'use client';
-import { Badge } from '../UI/Badge';
 import { useState, useEffect } from 'react';
+import { GuardianList } from './GuardianList';
+import { ProposeGuardianButton } from './ProposeGuardianButton';
 
 interface Guardian {
   id: string;
@@ -19,9 +20,7 @@ export default function GuardianManager() {
     const response = await fetch(
       `http://localhost:3001/users/${RECIPIENT_ALICE_ADDRESS}/guardians`
     );
-
     const data = await response.json();
-
     setGuardians(data);
   }
 
@@ -29,18 +28,14 @@ export default function GuardianManager() {
     fetchGuardians();
   }, []);
 
-  return (
-    <div className='p-4'>
-      <h1 className='text-2xl font-bold mb-4'>Guardian Manager</h1>
-      <p className='text-gray-600'>Number of guardians: {guardians.length}</p>
+  const handleDelete = (wallet: string) => {
+    console.log('Delete:', wallet);
+  };
 
-      <ul className='mt-4'>
-        {guardians.map((guardian) => (
-          <li key={guardian.id}>
-            {guardian.guardianWallet} ({guardian.status})
-          </li>
-        ))}
-      </ul>
-    </div>
+  return (
+    <>
+      <GuardianList guardians={guardians} onDelete={handleDelete} />
+      <ProposeGuardianButton onClick={() => console.log('Propose clicked!')} />
+    </>
   );
 }
