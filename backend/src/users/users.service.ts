@@ -45,6 +45,66 @@ export class UsersService {
     });
   }
 
+  async declineGuardianRoleByWallets(
+    recipientWallet: string,
+    guardianWallet: string
+  ) {
+    return this.prisma.userGuardians.update({
+      where: {
+        recipientWallet_guardianWallet: {
+          recipientWallet,
+          guardianWallet,
+        },
+      },
+      data: { status: 'declined' },
+    });
+  }
+
+  async cancelGuardianProposalByWallets(
+    recipientWallet: string,
+    guardianWallet: string
+  ) {
+    return this.prisma.userGuardians.update({
+      where: {
+        recipientWallet_guardianWallet: {
+          recipientWallet,
+          guardianWallet,
+        },
+      },
+      data: { status: 'cancelled' },
+    });
+  }
+
+  async guardianLeftRoleByWallets(
+    recipientWallet: string,
+    guardianWallet: string
+  ) {
+    return this.prisma.userGuardians.update({
+      where: {
+        recipientWallet_guardianWallet: {
+          recipientWallet,
+          guardianWallet,
+        },
+      },
+      data: { status: 'left' },
+    });
+  }
+
+  async removeGuardianByWallets(
+    recipientWallet: string,
+    guardianWallet: string
+  ) {
+    return this.prisma.userGuardians.update({
+      where: {
+        recipientWallet_guardianWallet: {
+          recipientWallet,
+          guardianWallet,
+        },
+      },
+      data: { status: 'removed' },
+    });
+  }
+
   async removeGuardianRelationByWallets(
     recipientWallet: string,
     guardianWallet: string

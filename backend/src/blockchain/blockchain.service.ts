@@ -114,7 +114,7 @@ export class BlockchainService implements OnModuleInit {
           )}`
         );
 
-        await this.usersService.removeGuardianRelationByWallets(
+        await this.usersService.declineGuardianRoleByWallets(
           recipient,
           guardian
         );
@@ -148,7 +148,7 @@ export class BlockchainService implements OnModuleInit {
             2
           )}`
         );
-        await this.usersService.removeGuardianRelationByWallets(
+        await this.usersService.cancelGuardianProposalByWallets(
           recipient,
           guardian
         );
@@ -182,10 +182,7 @@ export class BlockchainService implements OnModuleInit {
             2
           )}`
         );
-        await this.usersService.removeGuardianRelationByWallets(
-          recipient,
-          guardian
-        );
+        await this.usersService.guardianLeftRoleByWallets(recipient, guardian);
       },
 
       onError: (error) => {
