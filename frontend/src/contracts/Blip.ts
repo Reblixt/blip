@@ -1,3 +1,5 @@
+import { Address } from 'viem';
+
 export const blipAbi = [
   {
     type: 'constructor',
@@ -711,3 +713,7 @@ export const blipAbi = [
     inputs: [],
   },
 ] as const;
+
+const contractAddress = process.env.NEXT_PUBLIC_BLIP_CONTRACT_ADDRESS;
+
+export const BLIP_CONTRACT_ADDRESS = contractAddress as Address;

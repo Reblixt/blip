@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { GuardianList } from './GuardianList';
 import { ProposeGuardianButton } from './ProposeGuardianButton';
 import { useWriteContract } from 'wagmi';
-import { blipAbi } from '@/contracts/Blip';
+import { blipAbi, BLIP_CONTRACT_ADDRESS } from '@/contracts/Blip';
 import { Address } from 'viem';
 
 interface Guardian {
@@ -40,9 +40,9 @@ export default function GuardianManager() {
   const handleProposeGuardian = () => {
     writeContract({
       abi: blipAbi,
-      address: '0x5FbDB2315678afecb367f032d93F642f64180aa3',
+      address: BLIP_CONTRACT_ADDRESS,
       functionName: 'proposeGuardian',
-      args: ['0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC' as Address],
+      args: ['0x70997970C51812dc3A010C7d01b50e0d17dc79C8' as Address],
     });
   };
 
