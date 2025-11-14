@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import LayoutWrapper from '@/components/Layout/LayoutWrapper';
+import Wagmi from '@/providers/wagmi';
+import Tanstack from '@/providers/tanstack';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -27,7 +29,11 @@ export default function RootLayout({
     <html lang='en'>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <LayoutWrapper>{children}</LayoutWrapper>
+        <Wagmi>
+          <Tanstack>
+            <LayoutWrapper>{children}</LayoutWrapper>
+          </Tanstack>
+        </Wagmi>
       </body>
     </html>
   );

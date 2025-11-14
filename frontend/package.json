@@ -10,10 +10,13 @@
     "format": "biome format --write"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.90.9",
     "lucide-react": "^0.553.0",
     "next": "15.5.4",
     "react": "19.1.0",
-    "react-dom": "19.1.0"
+    "react-dom": "19.1.0",
+    "viem": "^2.39.0",
+    "wagmi": "^2.19.4"
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.0",
