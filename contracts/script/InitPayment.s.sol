@@ -11,7 +11,7 @@ contract InitPaymentScript is Script {
 
     address constant CONTRACT_ADDRESS = 0x5FbDB2315678afecb367f032d93F642f64180aa3;
 
-    uint256 constant SENDER_CHARLIE_PRIVATE_KEY = 0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a;
+    uint256 constant SENDER_CHARLIE_PRIVATE_KEY = 0x7c852118294e51e653712a81e05800f419141751be58f605c371e15141b007a6;
 
     Blip public blip;
 

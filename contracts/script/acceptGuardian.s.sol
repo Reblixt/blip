@@ -11,7 +11,7 @@ contract AcceptGuardianScript is Script {
 
     address constant CONTRACT_ADDRESS = 0x5FbDB2315678afecb367f032d93F642f64180aa3;
 
-    uint256 constant GUARDIAN_BOB_PRIVATE_KEY = 0x47e179ec197488593b187f80a00eb0da91f1b9d0b13f8733639f19c30a34926a;
+    uint256 constant GUARDIAN_BOB_PRIVATE_KEY = 0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d;
 
     Blip public blip;
 
