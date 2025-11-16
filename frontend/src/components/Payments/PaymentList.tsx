@@ -1,8 +1,5 @@
-// components/history/PaymentList.tsx
-
 import { PaymentCard } from './PaymentCard';
 
-// 1. Payment interface (kopiera från PaymentCard)
 interface Payment {
   id: string;
   contractId: number;
@@ -24,9 +21,14 @@ interface PaymentApprovals {
 interface PaymentListProps {
   payments: Payment[];
   currentUserWallet: string;
+  onRefresh: () => void;
 }
 
-export function PaymentList({ payments, currentUserWallet }: PaymentListProps) {
+export function PaymentList({
+  payments,
+  currentUserWallet,
+  onRefresh,
+}: PaymentListProps) {
   return (
     <div className='p-4 pb-32'>
       <h1 className='text-2xl font-bold mb-4'>History</h1>
@@ -36,6 +38,7 @@ export function PaymentList({ payments, currentUserWallet }: PaymentListProps) {
             key={payment.id}
             payment={payment}
             currentUserWallet={currentUserWallet}
+            onRefresh={onRefresh}
           />
         ))}
       </div>

@@ -1,26 +1,53 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { UserPlus } from 'lucide-react';
+import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import { blipAbi, BLIP_CONTRACT_ADDRESS } from '@/contracts/Blip';
+import { Address } from 'viem';
 
 interface ProposeGuardianInputProps {
-  onSubmit: (address: string) => void;
+  onClose: () => void;
+  onRefresh: () => void;
 }
 
-export function ProposeGuardianInput({ onSubmit }: ProposeGuardianInputProps) {
+export function ProposeGuardianInput({
+  onClose,
+  onRefresh,
+}: ProposeGuardianInputProps) {
   const [address, setAddress] = useState('');
 
-  const handleSubmit = (e?: React.FormEvent) => {
+  const { data: hash, writeContract } = useWriteContract();
+
+  const { isSuccess } = useWaitForTransactionReceipt({
+    hash,
+  });
+
+  const handleProposeGuardian = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (address.trim()) {
-      onSubmit(address);
+      writeContract({
+        abi: blipAbi,
+        address: BLIP_CONTRACT_ADDRESS,
+        functionName: 'proposeGuardian',
+        args: [address as Address],
+      });
       setAddress('');
     }
   };
 
+  useEffect(() => {
+    if (isSuccess) {
+      setTimeout(() => {
+        onRefresh();
+        onClose();
+      }, 1000);
+    }
+  }, [isSuccess, onRefresh, onClose]);
+
   return (
     <div className='fixed bottom-24 left-0 right-0 flex justify-center z-40 px-4'>
       <form
-        onSubmit={handleSubmit}
+        onSubmit={handleProposeGuardian}
         className='flex gap-0 w-full sm:w-auto shadow-lg rounded-xl overflow-hidden'>
         <input
           type='text'

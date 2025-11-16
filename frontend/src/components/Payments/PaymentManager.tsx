@@ -36,6 +36,10 @@ export default function PaymentManager() {
     setPayments(data);
   }
 
+  const handleRefresh = () => {
+    fetchPayments();
+  };
+
   const handleShowList = () => {
     setShowList(true);
   };
@@ -52,6 +56,7 @@ export default function PaymentManager() {
         <PaymentList
           payments={payments}
           currentUserWallet={RECIPIENT_ALICE_ADDRESS}
+          onRefresh={handleRefresh}
         />
       ) : (
         <ShowPaymentsButton onClick={handleShowList} />

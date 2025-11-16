@@ -2,9 +2,9 @@
 import { Card } from '../UI/Card';
 import { Badge } from '../UI/Badge';
 import { Plus, Minus, Trash2 } from 'lucide-react';
-import { useState } from 'react';
-import { Address, formatEther } from 'viem';
-import { useWriteContract } from 'wagmi';
+import { useState, useEffect } from 'react';
+import { formatEther } from 'viem';
+import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { blipAbi, BLIP_CONTRACT_ADDRESS } from '@/contracts/Blip';
 
 interface Payment {
@@ -28,9 +28,14 @@ interface PaymentApprovals {
 interface PaymentCardProps {
   payment: Payment;
   currentUserWallet: string;
+  onRefresh: () => void;
 }
 
-export function PaymentCard({ payment, currentUserWallet }: PaymentCardProps) {
+export function PaymentCard({
+  payment,
+  currentUserWallet,
+  onRefresh,
+}: PaymentCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const isIncoming = payment.recipientWallet === currentUserWallet;
@@ -43,7 +48,19 @@ export function PaymentCard({ payment, currentUserWallet }: PaymentCardProps) {
     : `-${formattedAmount}`;
   const amountColor = isIncoming ? 'text-green-500' : 'text-gray-500';
 
-  const { writeContract } = useWriteContract();
+  const { data: hash, writeContract } = useWriteContract();
+
+  const { isSuccess } = useWaitForTransactionReceipt({
+    hash,
+  });
+
+  useEffect(() => {
+    if (isSuccess) {
+      setTimeout(() => {
+        onRefresh();
+      }, 1000);
+    }
+  }, [isSuccess, onRefresh]);
   const handleCancelPayment = () => {
     writeContract({
       abi: blipAbi,
