@@ -2,6 +2,7 @@ import { Card } from '../UI/Card';
 import { Badge } from '../UI/Badge';
 import { Plus, Minus } from 'lucide-react';
 import { useState } from 'react';
+import { formatEther } from 'viem';
 
 interface Payment {
   id: string;
@@ -33,9 +34,10 @@ export function PaymentCard({ payment, currentUserWallet }: PaymentCardProps) {
   const otherParty = isIncoming
     ? payment.senderWallet
     : payment.recipientWallet;
+  const formattedAmount = formatEther(BigInt(payment.amount));
   const displayAmount = isIncoming
-    ? `+${payment.amount}`
-    : `-${payment.amount}`;
+    ? `+${formattedAmount}`
+    : `-${formattedAmount}`;
   const amountColor = isIncoming ? 'text-green-500' : 'text-gray-500';
 
   const shortenAddress = (address: string) => {
