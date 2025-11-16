@@ -1,7 +1,6 @@
 'use client';
 
-import { WagmiProvider } from 'wagmi';
-import { createConfig, http } from 'wagmi';
+import { WagmiProvider, createConfig, http } from 'wagmi';
 import { anvil, mainnet, sepolia } from 'wagmi/chains';
 
 export const config = createConfig({

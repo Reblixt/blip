@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { GuardianList } from './GuardianList';
 import { ProposeGuardianButton } from './ProposeGuardianButton';
+import { ProposeGuardianInput } from './ProposeGuardianInput';
 import { useWriteContract } from 'wagmi';
 import { blipAbi, BLIP_CONTRACT_ADDRESS } from '@/contracts/Blip';
 import { Address } from 'viem';
@@ -18,6 +19,7 @@ const RECIPIENT_ALICE_ADDRESS = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
 
 export default function GuardianManager() {
   const [guardians, setGuardians] = useState<Guardian[]>([]);
+  const [input, setInput] = useState(false);
 
   const { writeContract } = useWriteContract();
 
@@ -37,19 +39,29 @@ export default function GuardianManager() {
     console.log('Delete:', wallet);
   };
 
-  const handleProposeGuardian = () => {
+  const handleProposeGuardian = (guardianAddress: string) => {
     writeContract({
       abi: blipAbi,
       address: BLIP_CONTRACT_ADDRESS,
       functionName: 'proposeGuardian',
-      args: ['0x70997970C51812dc3A010C7d01b50e0d17dc79C8' as Address],
+      args: [guardianAddress as Address],
     });
+
+    setInput(false);
+  };
+
+  const openInput = () => {
+    setInput(true);
   };
 
   return (
     <>
       <GuardianList guardians={guardians} onDelete={handleDelete} />
-      <ProposeGuardianButton onClick={() => handleProposeGuardian()} />
+      {input ? (
+        <ProposeGuardianInput onSubmit={handleProposeGuardian} />
+      ) : (
+        <ProposeGuardianButton onClick={openInput} />
+      )}
     </>
   );
 }
