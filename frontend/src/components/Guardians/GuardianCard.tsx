@@ -2,6 +2,10 @@
 import { Card } from '../UI/Card';
 import { Badge } from '../UI/Badge';
 import { Trash2 } from 'lucide-react';
+import { Address } from 'viem';
+import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import { blipAbi, BLIP_CONTRACT_ADDRESS } from '@/contracts/Blip';
+import { useEffect } from 'react';
 
 interface Guardian {
   id: string;
@@ -13,10 +17,36 @@ interface Guardian {
 
 interface GuardianCardProps {
   guardian: Guardian;
+  onRefresh?: () => void;
   onDelete?: (guardianWallet: string) => void;
 }
 
-export function GuardianCard({ guardian, onDelete }: GuardianCardProps) {
+export function GuardianCard({
+  guardian,
+  onDelete,
+  onRefresh,
+}: GuardianCardProps) {
+  const { data: hash, writeContract } = useWriteContract();
+  const { isSuccess } = useWaitForTransactionReceipt({
+    hash,
+  });
+  useEffect(() => {
+    if (isSuccess && onRefresh) {
+      setTimeout(() => {
+        onRefresh();
+      }, 1000);
+    }
+  }, [isSuccess, onRefresh]);
+
+  const handleCancelGuardianProposal = (guardian: Guardian) => {
+    writeContract({
+      abi: blipAbi,
+      address: BLIP_CONTRACT_ADDRESS,
+      functionName: 'cancelGuardianProposal',
+      args: [guardian.guardianWallet as Address],
+    });
+  };
+
   const shortenAddress = (address: string) => {
     const first = address.slice(0, 6);
     const last = address.slice(-4);
@@ -66,7 +96,7 @@ export function GuardianCard({ guardian, onDelete }: GuardianCardProps) {
         </p>
 
         <button
-          onClick={() => onDelete?.(guardian.guardianWallet)}
+          onClick={() => handleCancelGuardianProposal(guardian)}
           className='transition-colors duration-200 ml-2'>
           <Trash2
             size={18}

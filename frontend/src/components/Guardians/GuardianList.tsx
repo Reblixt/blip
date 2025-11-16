@@ -11,9 +11,14 @@ interface Guardian {
 interface GuardianListProps {
   guardians: Guardian[];
   onDelete: (guardianWallet: string) => void;
+  onRefresh: () => void;
 }
 
-export function GuardianList({ guardians, onDelete }: GuardianListProps) {
+export function GuardianList({
+  guardians,
+  onDelete,
+  onRefresh,
+}: GuardianListProps) {
   return (
     <div className='p-4 pb-32'>
       <h1 className='text-2xl font-bold mb-4'>Guardians</h1>
@@ -23,6 +28,7 @@ export function GuardianList({ guardians, onDelete }: GuardianListProps) {
             key={guardian.id}
             guardian={guardian}
             onDelete={onDelete}
+            onRefresh={onRefresh}
           />
         ))}
       </div>

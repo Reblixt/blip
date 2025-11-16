@@ -48,7 +48,11 @@ export default function GuardianManager() {
 
   return (
     <>
-      <GuardianList guardians={guardians} onDelete={handleDelete} />
+      <GuardianList
+        guardians={guardians}
+        onDelete={handleDelete}
+        onRefresh={handleRefresh}
+      />
       {input ? (
         <ProposeGuardianInput
           onClose={handleCloseInput}
