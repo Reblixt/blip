@@ -1,4 +1,4 @@
-import { UserPlus } from 'lucide-react';
+import { ShieldPlus } from 'lucide-react';
 
 interface ProposeGuardianButtonProps {
   onClick: () => void;
@@ -26,7 +26,7 @@ export function ProposeGuardianButton({ onClick }: ProposeGuardianButtonProps) {
       transition-colors
       duration-200
     '>
-        <UserPlus size={24} />
+        <ShieldPlus size={24} />
         <span className='font-semibold'>Propose guardian</span>
       </button>
     </div>

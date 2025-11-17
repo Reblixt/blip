@@ -1,10 +1,11 @@
-import { History } from 'lucide-react';
+// components/guardians/ShowGuardiansButton.tsx
+import { ShieldUser } from 'lucide-react';
 
-interface ShowPaymentsButtonProps {
+interface ShowGuardiansButtonProps {
   onClick: () => void;
 }
 
-export function ShowPaymentsButton({ onClick }: ShowPaymentsButtonProps) {
+export function ShowGuardiansButton({ onClick }: ShowGuardiansButtonProps) {
   return (
     <div className='fixed bottom-24 left-0 right-0 flex justify-center z-40 px-4'>
       <button
@@ -26,8 +27,8 @@ export function ShowPaymentsButton({ onClick }: ShowPaymentsButtonProps) {
           transition-colors
           duration-200
         '>
-        <History size={24} />
-        <span className='font-semibold'>Show payments</span>
+        <ShieldUser size={24} />
+        <span className='font-semibold'>Show guardians</span>
       </button>
     </div>
   );

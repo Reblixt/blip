@@ -26,7 +26,11 @@ const BACKEND_URL = 'http://localhost:3001';
 
 export default function PaymentManager() {
   const [payments, setPayments] = useState<Payment[]>([]);
-  const [showList, setShowList] = useState<boolean>(false);
+  const [isListVisible, setIsListVisible] = useState<boolean>(false);
+
+  const handleRefresh = () => {
+    fetchPayments();
+  };
 
   async function fetchPayments() {
     const response = await fetch(
@@ -36,23 +40,19 @@ export default function PaymentManager() {
     setPayments(data);
   }
 
-  const handleRefresh = () => {
-    fetchPayments();
-  };
-
   const handleShowList = () => {
-    setShowList(true);
+    setIsListVisible(true);
   };
 
   useEffect(() => {
-    if (showList === true) {
+    if (isListVisible === true) {
       fetchPayments();
     }
-  }, [showList]);
+  }, [isListVisible]);
 
   return (
     <>
-      {showList ? (
+      {isListVisible ? (
         <PaymentList
           payments={payments}
           currentUserWallet={RECIPIENT_ALICE_ADDRESS}

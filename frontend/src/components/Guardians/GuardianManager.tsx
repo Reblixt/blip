@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { GuardianList } from './GuardianList';
 import { ProposeGuardianButton } from './ProposeGuardianButton';
 import { ProposeGuardianInput } from './ProposeGuardianInput';
+import { ShowGuardiansButton } from './ShowGuardiansButton';
 
 interface Guardian {
   id: string;
@@ -16,7 +17,8 @@ const RECIPIENT_ALICE_ADDRESS = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
 
 export default function GuardianManager() {
   const [guardians, setGuardians] = useState<Guardian[]>([]);
-  const [input, setInput] = useState(false);
+  const [isListVisible, setIsListVisible] = useState(false);
+  const [isInputOpen, setIsInputOpen] = useState(false);
 
   const handleRefresh = () => {
     fetchGuardians();
@@ -31,35 +33,47 @@ export default function GuardianManager() {
   }
 
   useEffect(() => {
-    fetchGuardians();
-  }, []);
+    if (isListVisible) {
+      fetchGuardians();
+    }
+  }, [isListVisible]);
 
   const handleDelete = (wallet: string) => {
     console.log('Delete:', wallet);
   };
 
   const handleCloseInput = () => {
-    setInput(false);
+    setIsInputOpen(false);
   };
 
   const openInput = () => {
-    setInput(true);
+    setIsInputOpen(true);
+  };
+
+  const handleShowGuardians = () => {
+    setIsListVisible(true);
   };
 
   return (
     <>
-      <GuardianList
-        guardians={guardians}
-        onDelete={handleDelete}
-        onRefresh={handleRefresh}
-      />
-      {input ? (
-        <ProposeGuardianInput
-          onClose={handleCloseInput}
-          onRefresh={handleRefresh}
-        />
+      {!isListVisible ? (
+        <ShowGuardiansButton onClick={handleShowGuardians} />
       ) : (
-        <ProposeGuardianButton onClick={openInput} />
+        <>
+          <GuardianList
+            guardians={guardians}
+            onDelete={handleDelete}
+            onRefresh={handleRefresh}
+          />
+          {isInputOpen ? (
+            <ProposeGuardianInput
+              onClose={handleCloseInput}
+              onRefresh={handleRefresh}
+            />
+          ) : (
+            <ProposeGuardianButton onClick={openInput} />
+          )}
+        </>
       )}
     </>
   );
