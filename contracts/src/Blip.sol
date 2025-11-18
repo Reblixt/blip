@@ -13,6 +13,11 @@ contract Blip {
         recipientAddress = msg.sender;
     }
 
+    modifier hasGuardians() {
+        if (guardians.length == 0) revert NoGuardiansSet();
+        _;
+    }
+
     modifier onlyRecipient() {
         require(msg.sender == recipientAddress, NotRecipient());
         _;
@@ -91,10 +96,8 @@ contract Blip {
     mapping(address => bool) public guardiansMap;
     mapping(address => bool) public pendingGuardians;
 
-    function initPayment(string memory _message) external payable {
-        if (guardians.length == 0) revert NoGuardiansSet();
+    function initPayment(string memory _message) external payable hasGuardians {
         if (msg.value == 0) revert InvalidAmount();
-
         _createPayment(address(0), msg.value, _message);
     }
 
@@ -102,8 +105,7 @@ contract Blip {
         address _tokenAddress,
         uint256 _amount,
         string memory _message
-    ) external {
-        if (guardians.length == 0) revert NoGuardiansSet();
+    ) external hasGuardians{
         if (_amount == 0) revert InvalidAmount();
         if (_tokenAddress == address(0)) revert InvalidAddress();
 
