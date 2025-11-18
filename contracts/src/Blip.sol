@@ -336,40 +336,39 @@ contract Blip {
             PaymentNotPending()
         );
 
-        uint paymentAmount = payments[_paymentId].amount; 
-
-        refundPayment(_paymentId, paymentAmount);
+        refundPayment(_paymentId);
     }
 
-    function refundPayment(uint256 _paymentId, uint256 _amount) internal {
+    function refundPayment(uint256 _paymentId) internal {
         require(
             payments[_paymentId].status == PaymentStatus.Pending ||
-                payments[_paymentId].status == PaymentStatus.Rejected,
+            payments[_paymentId].status == PaymentStatus.Rejected,
             PaymentNotPending()
         );
 
         address refundTo = payments[_paymentId].sender;
         address tokenAddress = payments[_paymentId].tokenAddress;
+        uint256 amount = payments[_paymentId].amount;
 
         if (tokenAddress == address(0)) {
             require(
-                address(this).balance >= _amount,
+                address(this).balance >= amount,
                 InsufficientContractBalance()
             );
-            payable(refundTo).transfer(_amount);
+            payable(refundTo).transfer(amount);
         } else {
             IERC20 paymentToken = IERC20(tokenAddress);
             require(
-                paymentToken.balanceOf(address(this)) >= _amount,
+                paymentToken.balanceOf(address(this)) >= amount,
                 InsufficientContractBalance()
             );
 
-            paymentToken.safeTransfer(refundTo, _amount);
+            paymentToken.safeTransfer(refundTo, amount);
         }
 
         payments[_paymentId].status = PaymentStatus.SentBack;
 
-        emit PaymentRefunded(_paymentId, refundTo, _amount);
+        emit PaymentRefunded(_paymentId, refundTo, amount);
     }
 
     function rejectPayment(uint256 _paymentId) external {
@@ -382,13 +381,13 @@ contract Blip {
             NotASigner()
         );
 
-        uint paymentAmount = payments[_paymentId].amount;
+        uint paymentAmount = payments[_paymentId].amount; 
 
         payments[_paymentId].status = PaymentStatus.Rejected;
 
         emit PaymentRejected(_paymentId, msg.sender, paymentAmount);
 
-        refundPayment(_paymentId, paymentAmount);
+        refundPayment(_paymentId);
     }
 
     function getPayment(
