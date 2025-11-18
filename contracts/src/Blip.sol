@@ -23,6 +23,11 @@ contract Blip {
         _;
     }
 
+    modifier isPendingGuardian(address _guardian) {
+        require(pendingGuardians[_guardian], GuardianNotPending());
+        _;
+    }
+
     modifier onlyRecipient() {
         require(msg.sender == recipientAddress, NotRecipient());
         _;
@@ -209,17 +214,13 @@ contract Blip {
 
     function cancelGuardianProposal(
         address newGuardian
-    ) external onlyRecipient {
-        require(pendingGuardians[newGuardian], GuardianNotPending());
-
+    ) external onlyRecipient isPendingGuardian(newGuardian) {
         pendingGuardians[newGuardian] = false;
 
         emit GuardianProposalCancelled(recipientAddress, newGuardian);
     }
 
-    function acceptGuardianRole() external {
-        require(pendingGuardians[msg.sender], GuardianNotPending());
-
+    function acceptGuardianRole() external isPendingGuardian(msg.sender) {
         pendingGuardians[msg.sender] = false;
         guardiansMap[msg.sender] = true;
         guardians.push(msg.sender);
@@ -227,9 +228,7 @@ contract Blip {
         emit GuardianAdded(recipientAddress, msg.sender);
     }
 
-    function declineGuardianRole() external {
-        require(pendingGuardians[msg.sender], GuardianNotPending());
-
+    function declineGuardianRole() external isPendingGuardian(msg.sender){
         pendingGuardians[msg.sender] = false;
 
         emit GuardianDeclinedRole(recipientAddress, msg.sender);
