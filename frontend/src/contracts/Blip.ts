@@ -104,11 +104,6 @@ export const blipAbi = [
         internalType: 'string',
       },
       {
-        name: 'timestamp',
-        type: 'uint256',
-        internalType: 'uint256',
-      },
-      {
         name: 'status',
         type: 'uint8',
         internalType: 'enum Blip.PaymentStatus',
@@ -228,8 +223,8 @@ export const blipAbi = [
     outputs: [
       {
         name: '',
-        type: 'uint256',
-        internalType: 'uint256',
+        type: 'uint64',
+        internalType: 'uint64',
       },
     ],
     stateMutability: 'view',
@@ -251,9 +246,29 @@ export const blipAbi = [
         internalType: 'uint256',
       },
       {
+        name: 'amount',
+        type: 'uint256',
+        internalType: 'uint256',
+      },
+      {
         name: 'sender',
         type: 'address',
         internalType: 'address',
+      },
+      {
+        name: 'guardianCount',
+        type: 'uint8',
+        internalType: 'uint8',
+      },
+      {
+        name: 'approvalCount',
+        type: 'uint8',
+        internalType: 'uint8',
+      },
+      {
+        name: 'status',
+        type: 'uint8',
+        internalType: 'enum Blip.PaymentStatus',
       },
       {
         name: 'receiver',
@@ -266,34 +281,9 @@ export const blipAbi = [
         internalType: 'address',
       },
       {
-        name: 'amount',
-        type: 'uint256',
-        internalType: 'uint256',
-      },
-      {
         name: 'message',
         type: 'string',
         internalType: 'string',
-      },
-      {
-        name: 'timestamp',
-        type: 'uint256',
-        internalType: 'uint256',
-      },
-      {
-        name: 'status',
-        type: 'uint8',
-        internalType: 'enum Blip.PaymentStatus',
-      },
-      {
-        name: 'guardianCount',
-        type: 'uint256',
-        internalType: 'uint256',
-      },
-      {
-        name: 'approvalCount',
-        type: 'uint256',
-        internalType: 'uint256',
       },
     ],
     stateMutability: 'view',

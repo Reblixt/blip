@@ -287,12 +287,18 @@ export class BlockchainService implements OnModuleInit {
         );
         await this.usersService.upsertUser(sender);
         await this.usersService.upsertUser(recipient);
+
+        const blockNumber = log[0].blockNumber;
+        const block = await this.viem.getBlock({ blockNumber });
+        const timestamp = new Date(Number(block.timestamp) * 1000);
+
         await this.paymentsService.create(
           {
             recipientWallet: recipient,
             amount: amount.toString(),
             tokenAddress: tokenAddress,
             message: message,
+            createdAt: timestamp,
           },
           sender,
           Number(paymentId)

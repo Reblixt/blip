@@ -112,14 +112,14 @@ contract Blip {
     mapping(address => bool) public guardiansMap;
     mapping(address => bool) public pendingGuardians;
 
-    function initPayment(string memory _message) external payable hasGuardians hasValidAmount(msg.value){
+    function initPayment(string calldata _message) external payable hasGuardians hasValidAmount(msg.value){
         _createPayment(address(0), msg.value, _message);
     }
 
     function initPayment(
         address _tokenAddress,
         uint256 _amount,
-        string memory _message
+        string calldata _message
     ) external hasGuardians hasValidAmount(_amount) {
         if (_tokenAddress == address(0)) revert InvalidAddress();
 

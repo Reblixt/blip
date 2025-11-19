@@ -1,4 +1,5 @@
-import { IsString, IsOptional, IsNotEmpty } from 'class-validator';
+import { IsString, IsOptional, IsNotEmpty, IsDate } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class CreatePaymentDto {
   @IsString()
@@ -13,4 +14,8 @@ export class CreatePaymentDto {
   @IsString()
   @IsOptional()
   message?: string;
+  @IsOptional()
+  @IsDate()
+  @Type(() => Date)
+  createdAt?: Date;
 }

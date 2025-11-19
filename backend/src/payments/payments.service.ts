@@ -49,6 +49,7 @@ export class PaymentsService {
         amount: dto.amount,
         tokenAddress: dto.tokenAddress,
         message: dto.message,
+        createdAt: dto.createdAt || new Date(),
         status: 'pending',
       },
     });
