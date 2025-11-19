@@ -83,22 +83,28 @@ contract Blip {
     }
 
     struct Payment {
-        uint256 id;
-        address sender;
-        address receiver;
-        address tokenAddress;
-        uint256 amount;
-        string message;
-        uint256 timestamp;
-        PaymentStatus status;
-        uint256 guardianCount; // Hur många behövs
-        uint256 approvalCount; // Hur många har godkänt hittills
-        mapping(address => bool) approvedBy; // Vem har godkänt
-        mapping(address => bool) requiredApprovals; // Vem får godkänna
+    uint256 id;                      // Slot 0 (32 bytes)
+    uint256 amount;                  // Slot 1 (32 bytes)
+    
+    address sender;                  // Slot 3 (20 bytes)
+    uint8 guardianCount;             // Slot 3 (1 byte)  ← Delar slot! // Hur många behövs // Hur många har godkänt hittills
+    uint8 approvalCount;             // Slot 3 (1 byte)  ← Delar slot!
+    PaymentStatus status;            // Slot 3 (1 byte)  ← Delar slot!
+    // 9 bytes kvar i slot 3
+    
+    address receiver;                // Slot 4 (20 bytes)
+    // 12 bytes kvar här
+    
+    address tokenAddress;            // Slot 5 (20 bytes)
+    // 12 bytes kvar här
+    
+    string message;                  // Slot 6+ (dynamic)
+    mapping(address => bool) approvedBy; // Vem har godkänt
+    mapping(address => bool) requiredApprovals; // Vem får godkänna
     }
 
     mapping(uint256 => Payment) public payments;
-    uint256 public paymentCounter = 0;
+    uint64 public paymentCounter = 0;
 
     address public recipientAddress;
 
@@ -127,7 +133,7 @@ contract Blip {
         function _createPayment(
         address _tokenAddress,
         uint256 _amount,
-        string memory _message
+        string calldata _message
     ) internal {
         Payment storage newPayment = payments[paymentCounter];
         newPayment.id = paymentCounter;
@@ -136,14 +142,13 @@ contract Blip {
         newPayment.receiver = recipientAddress;
         newPayment.amount = _amount;
         newPayment.message = _message;
-        newPayment.timestamp = block.timestamp;
         newPayment.status = PaymentStatus.Pending;
 
         for (uint i = 0; i < guardians.length; i++) {
             newPayment.requiredApprovals[guardians[i]] = true;
         }
 
-        newPayment.guardianCount = guardians.length;
+        newPayment.guardianCount = uint8(guardians.length);
         newPayment.approvalCount = 0;
 
         paymentCounter++;
@@ -221,6 +226,8 @@ contract Blip {
     }
 
     function acceptGuardianRole() external isPendingGuardian(msg.sender) {
+        require(guardians.length < type(uint8).max, "Guardian limit reached");
+
         pendingGuardians[msg.sender] = false;
         guardiansMap[msg.sender] = true;
         guardians.push(msg.sender);
@@ -303,6 +310,8 @@ contract Blip {
         uint paymentAmount = payments[_paymentId].amount;
         address recipient = payments[_paymentId].receiver;
 
+        payments[_paymentId].status = PaymentStatus.Completed;
+
         if (tokenAddress == address(0)) {
             require(
                 address(this).balance >= paymentAmount,
@@ -317,8 +326,6 @@ contract Blip {
             );
             paymentToken.safeTransfer(recipient, paymentAmount);
         }
-
-        payments[_paymentId].status = PaymentStatus.Completed;
 
         emit PaymentReleased(_paymentId, recipient, paymentAmount);
     }
@@ -350,6 +357,8 @@ contract Blip {
         address tokenAddress = payments[_paymentId].tokenAddress;
         uint256 amount = payments[_paymentId].amount;
 
+        payments[_paymentId].status = PaymentStatus.SentBack;
+
         if (tokenAddress == address(0)) {
             require(
                 address(this).balance >= amount,
@@ -365,8 +374,6 @@ contract Blip {
 
             paymentToken.safeTransfer(refundTo, amount);
         }
-
-        payments[_paymentId].status = PaymentStatus.SentBack;
 
         emit PaymentRefunded(_paymentId, refundTo, amount);
     }
@@ -401,7 +408,6 @@ contract Blip {
             address receiver,
             uint256 amount,
             string memory message,
-            uint256 timestamp,
             PaymentStatus status
         )
     {
@@ -411,7 +417,6 @@ contract Blip {
             payments[_id].receiver,
             payments[_id].amount,
             payments[_id].message,
-            payments[_id].timestamp,
             payments[_id].status
         );
     }
