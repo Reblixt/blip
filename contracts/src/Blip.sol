@@ -104,7 +104,7 @@ contract Blip {
     }
 
     mapping(uint256 => Payment) public payments;
-    uint64 public paymentCounter = 0;
+    uint256 public paymentCounter = 0;
 
     address public recipientAddress;
 
@@ -270,31 +270,21 @@ contract Blip {
     }
 
     function approvePayment(uint256 _paymentId) external {
-        require(
-            payments[_paymentId].status == PaymentStatus.Pending,
-            PaymentNotPending()
-        );
-        require(
-            !payments[_paymentId].approvedBy[msg.sender],
-            SignerAlreadyApproved()
-        );
-        require(
-            payments[_paymentId].requiredApprovals[msg.sender] == true,
-            NotASigner()
-        );
+
+    Payment storage payment = payments[_paymentId];
+
+    require(payment.status == PaymentStatus.Pending, PaymentNotPending());
+    require(!payment.approvedBy[msg.sender], SignerAlreadyApproved());
+    require(payment.requiredApprovals[msg.sender] == true, NotASigner());
 
 
-        uint paymentAmount = payments[_paymentId].amount;
-        payments[_paymentId].approvedBy[msg.sender] = true;
-        payments[_paymentId].approvalCount++;
+    uint paymentAmount = payment.amount;
+    payment.approvedBy[msg.sender] = true;
+    payment.approvalCount++;
 
-        if (
-            payments[_paymentId].approvalCount ==
-            payments[_paymentId].guardianCount
-        ) {
-            payments[_paymentId].status = PaymentStatus.Approved;
-
-            releasePayment(_paymentId);
+    if (payment.approvalCount == payment.guardianCount) {
+        payment.status = PaymentStatus.Approved;
+        releasePayment(_paymentId);
         }
 
         emit PaymentSigned(_paymentId, msg.sender, paymentAmount);
@@ -338,8 +328,9 @@ contract Blip {
     }
 
     function cancelPendingPayment(uint256 _paymentId) external onlyRecipient {
+        Payment storage payment = payments[_paymentId];
         require(
-            payments[_paymentId].status == PaymentStatus.Pending,
+            payment.status == PaymentStatus.Pending,
             PaymentNotPending()
         );
 
@@ -347,17 +338,19 @@ contract Blip {
     }
 
     function refundPayment(uint256 _paymentId) internal {
+    Payment storage payment = payments[_paymentId];
+
         require(
-            payments[_paymentId].status == PaymentStatus.Pending ||
-            payments[_paymentId].status == PaymentStatus.Rejected,
+            payment.status == PaymentStatus.Pending ||
+            payment.status == PaymentStatus.Rejected,
             PaymentNotPending()
         );
 
-        address refundTo = payments[_paymentId].sender;
-        address tokenAddress = payments[_paymentId].tokenAddress;
-        uint256 amount = payments[_paymentId].amount;
+        address refundTo = payment.sender;
+        address tokenAddress = payment.tokenAddress;
+        uint256 amount = payment.amount;
 
-        payments[_paymentId].status = PaymentStatus.SentBack;
+        payment.status = PaymentStatus.SentBack;
 
         if (tokenAddress == address(0)) {
             require(
@@ -379,18 +372,20 @@ contract Blip {
     }
 
     function rejectPayment(uint256 _paymentId) external {
+        Payment storage payment = payments[_paymentId];
+        
         require(
-            payments[_paymentId].status == PaymentStatus.Pending,
+            payment.status == PaymentStatus.Pending,
             PaymentNotPending()
         );
         require(
-            payments[_paymentId].requiredApprovals[msg.sender] == true,
+            payment.requiredApprovals[msg.sender] == true,
             NotASigner()
         );
 
-        uint paymentAmount = payments[_paymentId].amount; 
+        uint paymentAmount = payment.amount; 
 
-        payments[_paymentId].status = PaymentStatus.Rejected;
+        payment.status = PaymentStatus.Rejected;
 
         emit PaymentRejected(_paymentId, msg.sender, paymentAmount);
 
