@@ -43,6 +43,7 @@ contract Blip {
     error GuardianDoesNotExist();
     error GuardianAlreadyPending();
     error GuardianNotPending();
+    error GuardianLimitReached();
     error NotASigner();
     error PaymentNotPending();
     error PaymentNotApproved();
@@ -83,22 +84,15 @@ contract Blip {
     }
 
     struct Payment {
-    uint256 id;                      // Slot 0 (32 bytes)
-    uint256 amount;                  // Slot 1 (32 bytes)
-    
-    address sender;                  // Slot 3 (20 bytes)
-    uint8 guardianCount;             // Slot 3 (1 byte)  ← Delar slot! // Hur många behövs // Hur många har godkänt hittills
-    uint8 approvalCount;             // Slot 3 (1 byte)  ← Delar slot!
-    PaymentStatus status;            // Slot 3 (1 byte)  ← Delar slot!
-    // 9 bytes kvar i slot 3
-    
-    address receiver;                // Slot 4 (20 bytes)
-    // 12 bytes kvar här
-    
-    address tokenAddress;            // Slot 5 (20 bytes)
-    // 12 bytes kvar här
-    
-    string message;                  // Slot 6+ (dynamic)
+    uint256 id;                     
+    uint256 amount;                 
+    address sender;                 
+    uint8 guardianCount; // Hur många behövs
+    uint8 approvalCount; // Hur många har godkänt hittills            
+    PaymentStatus status;
+    address receiver;          
+    address tokenAddress;
+    string message;
     mapping(address => bool) approvedBy; // Vem har godkänt
     mapping(address => bool) requiredApprovals; // Vem får godkänna
     }
@@ -136,6 +130,8 @@ contract Blip {
         string calldata _message
     ) internal {
         Payment storage newPayment = payments[paymentCounter];
+        uint256 guardianLength = guardians.length;
+
         newPayment.id = paymentCounter;
         newPayment.sender = msg.sender;
         newPayment.tokenAddress = _tokenAddress;
@@ -144,11 +140,11 @@ contract Blip {
         newPayment.message = _message;
         newPayment.status = PaymentStatus.Pending;
 
-        for (uint i = 0; i < guardians.length; i++) {
+        for (uint i = 0; i < guardianLenght; i++) {
             newPayment.requiredApprovals[guardians[i]] = true;
         }
 
-        newPayment.guardianCount = uint8(guardians.length);
+        newPayment.guardianCount = uint8(guardianLength);
         newPayment.approvalCount = 0;
 
         paymentCounter++;
@@ -226,7 +222,7 @@ contract Blip {
     }
 
     function acceptGuardianRole() external isPendingGuardian(msg.sender) {
-        require(guardians.length < type(uint8).max, "Guardian limit reached");
+        if (guardians.length >= type(uint8).max) revert GuardianLimitReached();
 
         pendingGuardians[msg.sender] = false;
         guardiansMap[msg.sender] = true;
@@ -291,16 +287,18 @@ contract Blip {
     }
 
     function releasePayment(uint256 _paymentId) internal {
+        Payment storage payment = payments[_paymentId];
+
         require(
-            payments[_paymentId].status == PaymentStatus.Approved,
+            payment.status == PaymentStatus.Approved,
             PaymentNotApproved()
         );
 
-        address tokenAddress = payments[_paymentId].tokenAddress;
-        uint paymentAmount = payments[_paymentId].amount;
-        address recipient = payments[_paymentId].receiver;
+        address tokenAddress = payment.tokenAddress;
+        uint paymentAmount = payment.amount;
+        address recipient = payment.receiver;
 
-        payments[_paymentId].status = PaymentStatus.Completed;
+        payment.status = PaymentStatus.Completed;
 
         if (tokenAddress == address(0)) {
             require(
