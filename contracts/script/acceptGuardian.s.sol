@@ -11,6 +11,8 @@ contract AcceptGuardianScript is Script {
 
     address constant CONTRACT_ADDRESS = 0x5FbDB2315678afecb367f032d93F642f64180aa3;
 
+    address constant RECIPIANT_ADDRESS = 0x70997970C51812dc3A010C7d01b50e0d17dc79C8;
+
     uint256 constant GUARDIAN_BOB_PRIVATE_KEY = 0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d;
 
     Blip public blip;
@@ -23,7 +25,7 @@ contract AcceptGuardianScript is Script {
         vm.startBroadcast(GUARDIAN_BOB_PRIVATE_KEY);
 
         blip = Blip(payable(CONTRACT_ADDRESS));
-        blip.acceptGuardianRole();
+        blip.acceptGuardianRole(RECIPIANT_ADDRESS);
 
         console.log("Guardian accepts guardian role");
         console.log("Guardian address", msg.sender);

@@ -20,7 +20,14 @@ contract BlipTest is Test {
         address indexed recipient,
         address indexed guardian
     );
-    event PaymentInitiated(address senderAddress, uint amount);
+    event PaymentInitiated(
+    uint256 indexed paymentId, 
+    address indexed senderAddress, 
+    address indexed recipient,
+    uint amount, 
+    address tokenAddress,
+    string message
+);
 
     function setUp() public {
         kontrakt = new Blip();
@@ -29,15 +36,10 @@ contract BlipTest is Test {
         vm.deal(address(kontrakt), 1 ether);
     }
 
-    function test_recipientIsSetCorrectly() public view {
-        address recipient = kontrakt.recipientAddress();
-        assertEq(recipient, address(this));
-    }
-
     function test_proposeGuardian() public {
-        kontrakt.proposeGuardian(Alice);
-        bool isPending = kontrakt.pendingGuardians(Alice);
-        assertEq(isPending, true);
+    kontrakt.proposeGuardian(Alice);
+    bool isPending = kontrakt.pendingGuardians(address(this), Alice);
+    assertEq(isPending, true);
     }
 
     function test_cannotProposeZeroAddress() public {
@@ -51,72 +53,69 @@ contract BlipTest is Test {
     }
 
     function test_acceptGuardianRole() public {
-        // 1. Recipient föreslår Alice
-        kontrakt.proposeGuardian(Alice);
-
-        // 2. Förvänta event
-        vm.expectEmit(true, true, true, true);
-        emit GuardianAdded(address(this), Alice); // Fyll i rätt värden här
-
-        // 3. Alice accepterar (använd vm.prank!)
-        vm.prank(Alice);
-        kontrakt.acceptGuardianRole();
-
-        // 4. Verifiera att Alice är aktiv guardian
-        assertEq(kontrakt.pendingGuardians(Alice), false);
-        assertEq(kontrakt.guardiansMap(Alice), true);
-    }
+    kontrakt.proposeGuardian(Alice);
+    
+    vm.expectEmit(true, true, true, true);
+    emit GuardianAdded(address(this), Alice);
+    
+    vm.prank(Alice);
+    kontrakt.acceptGuardianRole(address(this)); 
+    
+    assertEq(kontrakt.pendingGuardians(address(this), Alice), false);
+    assertEq(kontrakt.isGuardian(address(this), Alice), true); 
+}
 
     function test_declineGuardianRole() public {
-        // 1. Recipient föreslår Alice
-        kontrakt.proposeGuardian(Alice);
-        vm.prank(Alice);
-
-        // 2. Förvänta event
-        vm.expectEmit(true, true, true, true);
-        emit GuardianDeclinedRole(address(this), Alice); // Fyll i rätt värden här
-
-        kontrakt.declineGuardianRole();
-
-        assertEq(kontrakt.pendingGuardians(Alice), false);
-        assertEq(kontrakt.guardiansMap(Alice), false);
+    kontrakt.proposeGuardian(Alice);
+    
+    vm.expectEmit(true, true, true, true);
+    emit GuardianDeclinedRole(address(this), Alice);
+    
+    vm.prank(Alice);
+    kontrakt.declineGuardianRole(address(this)); 
+    
+    assertEq(kontrakt.pendingGuardians(address(this), Alice), false); 
+    assertEq(kontrakt.isGuardian(address(this), Alice), false);
     }
 
     function test_initPayment() public {
-        _setUpGuardians();
+    _setUpGuardians(); 
+    
+    vm.deal(address(this), 2 ether);
+    
+    vm.expectEmit(true, true, true, true);
+    emit PaymentInitiated(
+        0,                
+        address(this),     
+        Bill,               
+        1 ether,           
+        address(0),        
+        "Test message"  
+    );
 
-        //    - Event emitterades
-        vm.expectEmit(true, true, true, true);
-        emit PaymentInitiated(Bill, 1 ether); // Fyll i rätt värden här
-
-        // 2. Bill skickar betalning
-        vm.prank(Bill);
-        kontrakt.initPayment{value: 1 ether}("Test message");
-
-        // 3. Verifiera:
-        //    - paymentCounter ökade
-        assertEq(kontrakt.paymentCounter(), 1);
-        //    - Bills balance minskade
-        assertEq(Bill.balance, 1 ether);
-        //    - Kontraktets balance ökade
-        assertEq(address(kontrakt).balance, 1 ether);
+    kontrakt.initPayment{value: 1 ether}(Bill, 1 ether, "Test message");
+    
+    assertEq(kontrakt.paymentCounter(), 1);
+    assertEq(address(this).balance, 1 ether); 
+    assertEq(address(kontrakt).balance, 2 ether);
     }
 
     function test_ApprovePaymentsWithGuardians() public {
-        _setUpGuardians();
+    _setUpGuardians();
+    
+    vm.deal(address(this), 2 ether);
 
-        vm.prank(Bill);
-        kontrakt.initPayment{value: 1 ether}("Test message");
+    kontrakt.initPayment{value: 1 ether}(Bill, 1 ether, "Test message");
 
-        console.log(address(kontrakt).balance);
+    console.log(address(kontrakt).balance);
 
-        vm.prank(Alice);
-        kontrakt.approvePayment(0);
+    vm.prank(Alice);
+    kontrakt.approvePayment(0);
     }
 
     function _setUpGuardians() internal {
-        kontrakt.proposeGuardian(Alice);
-        vm.prank(Alice);
-        kontrakt.acceptGuardianRole();
+    kontrakt.proposeGuardian(Alice);
+    vm.prank(Alice);
+    kontrakt.acceptGuardianRole(address(this)); 
     }
 }

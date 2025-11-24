@@ -9,27 +9,15 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 contract Blip {
     using SafeERC20 for IERC20;
 
-    constructor() {
-        recipientAddress = msg.sender;
-    }
+    constructor() {}
 
     modifier hasGuardians() {
-        if (guardians.length == 0) revert NoGuardiansSet();
-        _;
+    if (userGuardians[msg.sender].length == 0) revert NoGuardiansSet();
+    _;
     }
 
     modifier hasValidAmount(uint256 _amount) {
         if (_amount == 0) revert InvalidAmount();
-        _;
-    }
-
-    modifier isPendingGuardian(address _guardian) {
-        require(pendingGuardians[_guardian], GuardianNotPending());
-        _;
-    }
-
-    modifier onlyRecipient() {
-        require(msg.sender == recipientAddress, NotRecipient());
         _;
     }
 
@@ -100,18 +88,17 @@ contract Blip {
     mapping(uint256 => Payment) public payments;
     uint256 public paymentCounter = 0;
 
-    address public recipientAddress;
+    mapping(address => address[]) public userGuardians;
+    mapping(address => mapping(address => bool)) public isGuardian;
+    mapping(address => mapping(address => bool)) public pendingGuardians;
 
-    address[] public guardians;
-    mapping(address => bool) public guardiansMap;
-    mapping(address => bool) public pendingGuardians;
-
-    function initPayment(string calldata _message) external payable hasGuardians hasValidAmount(msg.value){
-        _createPayment(address(0), msg.value, _message);
+    function initPayment(address _recipient, uint256 _amount, string calldata _message) external payable hasGuardians hasValidAmount(msg.value){
+        _createPayment(address(0), _recipient,msg.value, _message);
     }
 
     function initPayment(
         address _tokenAddress,
+        address _recipient,
         uint256 _amount,
         string calldata _message
     ) external hasGuardians hasValidAmount(_amount) {
@@ -121,27 +108,28 @@ contract Blip {
 
           IERC20(_tokenAddress).safeTransferFrom(msg.sender, address(this), _amount);
 
-        _createPayment(_tokenAddress, _amount, _message);
+        _createPayment(_tokenAddress, _recipient, _amount, _message);
     }
 
         function _createPayment(
         address _tokenAddress,
+        address _recipient,
         uint256 _amount,
         string calldata _message
     ) internal {
         Payment storage newPayment = payments[paymentCounter];
-        uint256 guardianLength = guardians.length;
+        uint256 guardianLength = userGuardians[msg.sender].length;
 
         newPayment.id = paymentCounter;
         newPayment.sender = msg.sender;
         newPayment.tokenAddress = _tokenAddress;
-        newPayment.receiver = recipientAddress;
+        newPayment.receiver = _recipient;
         newPayment.amount = _amount;
         newPayment.message = _message;
         newPayment.status = PaymentStatus.Pending;
 
-        for (uint i = 0; i < guardianLenght; i++) {
-            newPayment.requiredApprovals[guardians[i]] = true;
+        for (uint i = 0; i < guardianLength; i++) {
+            newPayment.requiredApprovals[userGuardians[msg.sender][i]] = true;
         }
 
         newPayment.guardianCount = uint8(guardianLength);
@@ -150,7 +138,7 @@ contract Blip {
         paymentCounter++;
 
         // borde createPayment anropa releasePayment() om guardianCount == 0?
-        emit PaymentInitiated(newPayment.id, msg.sender, recipientAddress, _amount, _tokenAddress,_message);
+        emit PaymentInitiated(newPayment.id, msg.sender, _recipient, _amount, _tokenAddress,_message);
     }
 
     // function directPayment(string memory _message) external payable {
@@ -202,64 +190,68 @@ contract Blip {
     //     emit PaymentReleased(recipientAddress, _amount);
     // }
 
-    function proposeGuardian(address newGuardian) external onlyRecipient {
+    function proposeGuardian(address newGuardian) external {
         require(newGuardian != address(0), InvalidAddress());
-        require(newGuardian != recipientAddress, RecipientCannotBeGuardian());
-        require(!guardiansMap[newGuardian], GuardianAlreadyExist());
-        require(!pendingGuardians[newGuardian], GuardianAlreadyPending());
+        require(newGuardian != msg.sender, RecipientCannotBeGuardian());
+        require(!isGuardian[msg.sender][newGuardian], GuardianAlreadyExist());
+        require(!pendingGuardians[msg.sender][newGuardian], GuardianAlreadyPending());
 
-        pendingGuardians[newGuardian] = true;
+        pendingGuardians[msg.sender][newGuardian] = true;
 
         emit GuardianProposed(msg.sender, newGuardian);
     }
 
-    function cancelGuardianProposal(
-        address newGuardian
-    ) external onlyRecipient isPendingGuardian(newGuardian) {
-        pendingGuardians[newGuardian] = false;
+    function cancelGuardianProposal(address newGuardian) external {
+        require(pendingGuardians[msg.sender][newGuardian], GuardianNotPending());
+        pendingGuardians[msg.sender][newGuardian] = false;
 
-        emit GuardianProposalCancelled(recipientAddress, newGuardian);
+        emit GuardianProposalCancelled(msg.sender, newGuardian);
     }
 
-    function acceptGuardianRole() external isPendingGuardian(msg.sender) {
-        if (guardians.length >= type(uint8).max) revert GuardianLimitReached();
+    function acceptGuardianRole(address recipient) external {
+        require(pendingGuardians[recipient][msg.sender], GuardianNotPending());
 
-        pendingGuardians[msg.sender] = false;
-        guardiansMap[msg.sender] = true;
-        guardians.push(msg.sender);
+        if (userGuardians[recipient].length >= type(uint8).max) revert GuardianLimitReached();
 
-        emit GuardianAdded(recipientAddress, msg.sender);
+        pendingGuardians[recipient][msg.sender] = false;
+
+        isGuardian[recipient][msg.sender] = true;
+        userGuardians[recipient].push(msg.sender);
+
+        emit GuardianAdded(recipient, msg.sender);
     }
 
-    function declineGuardianRole() external isPendingGuardian(msg.sender){
-        pendingGuardians[msg.sender] = false;
+    function declineGuardianRole(address recipient) external {
+        require(pendingGuardians[recipient][msg.sender], GuardianNotPending());
 
-        emit GuardianDeclinedRole(recipientAddress, msg.sender);
+        pendingGuardians[recipient][msg.sender] = false;
+
+        emit GuardianDeclinedRole(recipient, msg.sender);
     }
 
-    function leaveGuardianRole() external {
-        require(guardiansMap[msg.sender], GuardianDoesNotExist());
+    function leaveGuardianRole(address recipient) external {
+        require(isGuardian[recipient][msg.sender], GuardianDoesNotExist());
 
-        guardiansMap[msg.sender] = false;
-        removeFromArray(msg.sender);
+        isGuardian[recipient][msg.sender] = false;
+        removeFromArray(recipient, msg.sender);
 
-        emit GuardianLeftRole(recipientAddress, msg.sender);
+        emit GuardianLeftRole(recipient, msg.sender);
     }
 
-    function removeGuardian(address oldGuardian) external onlyRecipient {
-        require(guardiansMap[oldGuardian], GuardianDoesNotExist());
+    function removeGuardian(address oldGuardian) external {
+        require(isGuardian[msg.sender][oldGuardian], GuardianDoesNotExist());
 
-        guardiansMap[oldGuardian] = false;
-        removeFromArray(oldGuardian);
+        isGuardian[msg.sender][oldGuardian] = false;
+        removeFromArray(msg.sender, oldGuardian);
 
         emit GuardianRemoved(msg.sender, oldGuardian);
     }
 
-    function removeFromArray(address guardian) internal {
-        for (uint i = 0; i < guardians.length; i++) {
-            if (guardians[i] == guardian) {
-                guardians[i] = guardians[guardians.length - 1];
-                guardians.pop();
+    function removeFromArray(address recipient, address guardian) internal {
+        for (uint i = 0; i < userGuardians[recipient].length; i++) {
+            if (userGuardians[recipient][i] == guardian) {
+                userGuardians[recipient][i] = userGuardians[recipient][userGuardians[recipient].length - 1];
+                userGuardians[recipient].pop();
                 break;
             }
         }
@@ -325,7 +317,7 @@ contract Blip {
         return payments[_paymentId].approvedBy[_guardian];
     }
 
-    function cancelPendingPayment(uint256 _paymentId) external onlyRecipient {
+    function cancelPendingPayment(uint256 _paymentId) external {
         Payment storage payment = payments[_paymentId];
         require(
             payment.status == PaymentStatus.Pending,
