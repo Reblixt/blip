@@ -1,53 +1,118 @@
 export const blipAbi = [
-  { type: 'constructor', inputs: [], stateMutability: 'nonpayable' },
-  { type: 'fallback', stateMutability: 'payable' },
-  { type: 'receive', stateMutability: 'payable' },
+  {
+    type: 'constructor',
+    inputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'fallback',
+    stateMutability: 'payable',
+  },
+  {
+    type: 'receive',
+    stateMutability: 'payable',
+  },
   {
     type: 'function',
     name: 'acceptGuardianRole',
-    inputs: [],
+    inputs: [
+      {
+        name: 'recipient',
+        type: 'address',
+        internalType: 'address',
+      },
+    ],
     outputs: [],
     stateMutability: 'nonpayable',
   },
   {
     type: 'function',
     name: 'approvePayment',
-    inputs: [{ name: '_paymentId', type: 'uint256', internalType: 'uint256' }],
+    inputs: [
+      {
+        name: '_paymentId',
+        type: 'uint256',
+        internalType: 'uint256',
+      },
+    ],
     outputs: [],
     stateMutability: 'nonpayable',
   },
   {
     type: 'function',
     name: 'cancelGuardianProposal',
-    inputs: [{ name: 'newGuardian', type: 'address', internalType: 'address' }],
+    inputs: [
+      {
+        name: 'newGuardian',
+        type: 'address',
+        internalType: 'address',
+      },
+    ],
     outputs: [],
     stateMutability: 'nonpayable',
   },
   {
     type: 'function',
     name: 'cancelPendingPayment',
-    inputs: [{ name: '_paymentId', type: 'uint256', internalType: 'uint256' }],
+    inputs: [
+      {
+        name: '_paymentId',
+        type: 'uint256',
+        internalType: 'uint256',
+      },
+    ],
     outputs: [],
     stateMutability: 'nonpayable',
   },
   {
     type: 'function',
     name: 'declineGuardianRole',
-    inputs: [],
+    inputs: [
+      {
+        name: 'recipient',
+        type: 'address',
+        internalType: 'address',
+      },
+    ],
     outputs: [],
     stateMutability: 'nonpayable',
   },
   {
     type: 'function',
     name: 'getPayment',
-    inputs: [{ name: '_id', type: 'uint256', internalType: 'uint256' }],
+    inputs: [
+      {
+        name: '_id',
+        type: 'uint256',
+        internalType: 'uint256',
+      },
+    ],
     outputs: [
-      { name: 'id', type: 'uint256', internalType: 'uint256' },
-      { name: 'sender', type: 'address', internalType: 'address' },
-      { name: 'receiver', type: 'address', internalType: 'address' },
-      { name: 'amount', type: 'uint256', internalType: 'uint256' },
-      { name: 'message', type: 'string', internalType: 'string' },
-      { name: 'timestamp', type: 'uint256', internalType: 'uint256' },
+      {
+        name: 'id',
+        type: 'uint256',
+        internalType: 'uint256',
+      },
+      {
+        name: 'sender',
+        type: 'address',
+        internalType: 'address',
+      },
+      {
+        name: 'receiver',
+        type: 'address',
+        internalType: 'address',
+      },
+      {
+        name: 'amount',
+        type: 'uint256',
+        internalType: 'uint256',
+      },
+      {
+        name: 'message',
+        type: 'string',
+        internalType: 'string',
+      },
       {
         name: 'status',
         type: 'uint8',
@@ -58,27 +123,50 @@ export const blipAbi = [
   },
   {
     type: 'function',
-    name: 'guardians',
-    inputs: [{ name: '', type: 'uint256', internalType: 'uint256' }],
-    outputs: [{ name: '', type: 'address', internalType: 'address' }],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    name: 'guardiansMap',
-    inputs: [{ name: '', type: 'address', internalType: 'address' }],
-    outputs: [{ name: '', type: 'bool', internalType: 'bool' }],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
     name: 'hasApproved',
     inputs: [
-      { name: '_paymentId', type: 'uint256', internalType: 'uint256' },
-      { name: '_guardian', type: 'address', internalType: 'address' },
+      {
+        name: '_paymentId',
+        type: 'uint256',
+        internalType: 'uint256',
+      },
+      {
+        name: '_guardian',
+        type: 'address',
+        internalType: 'address',
+      },
     ],
-    outputs: [{ name: '', type: 'bool', internalType: 'bool' }],
+    outputs: [
+      {
+        name: '',
+        type: 'bool',
+        internalType: 'bool',
+      },
+    ],
     stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    name: 'initPayment',
+    inputs: [
+      {
+        name: '_recipient',
+        type: 'address',
+        internalType: 'address',
+      },
+      {
+        name: '_amount',
+        type: 'uint256',
+        internalType: 'uint256',
+      },
+      {
+        name: '_message',
+        type: 'string',
+        internalType: 'string',
+      },
+    ],
+    outputs: [],
+    stateMutability: 'payable',
   },
   {
     type: 'function',
@@ -89,23 +177,59 @@ export const blipAbi = [
         type: 'address',
         internalType: 'address',
       },
-      { name: '_amount', type: 'uint256', internalType: 'uint256' },
-      { name: '_message', type: 'string', internalType: 'string' },
+      {
+        name: '_recipient',
+        type: 'address',
+        internalType: 'address',
+      },
+      {
+        name: '_amount',
+        type: 'uint256',
+        internalType: 'uint256',
+      },
+      {
+        name: '_message',
+        type: 'string',
+        internalType: 'string',
+      },
     ],
     outputs: [],
     stateMutability: 'nonpayable',
   },
   {
     type: 'function',
-    name: 'initPayment',
-    inputs: [{ name: '_message', type: 'string', internalType: 'string' }],
-    outputs: [],
-    stateMutability: 'payable',
+    name: 'isGuardian',
+    inputs: [
+      {
+        name: '',
+        type: 'address',
+        internalType: 'address',
+      },
+      {
+        name: '',
+        type: 'address',
+        internalType: 'address',
+      },
+    ],
+    outputs: [
+      {
+        name: '',
+        type: 'bool',
+        internalType: 'bool',
+      },
+    ],
+    stateMutability: 'view',
   },
   {
     type: 'function',
     name: 'leaveGuardianRole',
-    inputs: [],
+    inputs: [
+      {
+        name: 'recipient',
+        type: 'address',
+        internalType: 'address',
+      },
+    ],
     outputs: [],
     stateMutability: 'nonpayable',
   },
@@ -113,37 +237,9 @@ export const blipAbi = [
     type: 'function',
     name: 'paymentCounter',
     inputs: [],
-    outputs: [{ name: '', type: 'uint256', internalType: 'uint256' }],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    name: 'payments',
-    inputs: [{ name: '', type: 'uint256', internalType: 'uint256' }],
     outputs: [
-      { name: 'id', type: 'uint256', internalType: 'uint256' },
-      { name: 'sender', type: 'address', internalType: 'address' },
-      { name: 'receiver', type: 'address', internalType: 'address' },
       {
-        name: 'tokenAddress',
-        type: 'address',
-        internalType: 'address',
-      },
-      { name: 'amount', type: 'uint256', internalType: 'uint256' },
-      { name: 'message', type: 'string', internalType: 'string' },
-      { name: 'timestamp', type: 'uint256', internalType: 'uint256' },
-      {
-        name: 'status',
-        type: 'uint8',
-        internalType: 'enum Blip.PaymentStatus',
-      },
-      {
-        name: 'guardianCount',
-        type: 'uint256',
-        internalType: 'uint256',
-      },
-      {
-        name: 'approvalCount',
+        name: '',
         type: 'uint256',
         internalType: 'uint256',
       },
@@ -152,38 +248,149 @@ export const blipAbi = [
   },
   {
     type: 'function',
+    name: 'payments',
+    inputs: [
+      {
+        name: '',
+        type: 'uint256',
+        internalType: 'uint256',
+      },
+    ],
+    outputs: [
+      {
+        name: 'id',
+        type: 'uint256',
+        internalType: 'uint256',
+      },
+      {
+        name: 'amount',
+        type: 'uint256',
+        internalType: 'uint256',
+      },
+      {
+        name: 'sender',
+        type: 'address',
+        internalType: 'address',
+      },
+      {
+        name: 'guardianCount',
+        type: 'uint8',
+        internalType: 'uint8',
+      },
+      {
+        name: 'approvalCount',
+        type: 'uint8',
+        internalType: 'uint8',
+      },
+      {
+        name: 'status',
+        type: 'uint8',
+        internalType: 'enum Blip.PaymentStatus',
+      },
+      {
+        name: 'receiver',
+        type: 'address',
+        internalType: 'address',
+      },
+      {
+        name: 'tokenAddress',
+        type: 'address',
+        internalType: 'address',
+      },
+      {
+        name: 'message',
+        type: 'string',
+        internalType: 'string',
+      },
+    ],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
     name: 'pendingGuardians',
-    inputs: [{ name: '', type: 'address', internalType: 'address' }],
-    outputs: [{ name: '', type: 'bool', internalType: 'bool' }],
+    inputs: [
+      {
+        name: '',
+        type: 'address',
+        internalType: 'address',
+      },
+      {
+        name: '',
+        type: 'address',
+        internalType: 'address',
+      },
+    ],
+    outputs: [
+      {
+        name: '',
+        type: 'bool',
+        internalType: 'bool',
+      },
+    ],
     stateMutability: 'view',
   },
   {
     type: 'function',
     name: 'proposeGuardian',
-    inputs: [{ name: 'newGuardian', type: 'address', internalType: 'address' }],
+    inputs: [
+      {
+        name: 'newGuardian',
+        type: 'address',
+        internalType: 'address',
+      },
+    ],
     outputs: [],
     stateMutability: 'nonpayable',
   },
   {
     type: 'function',
-    name: 'recipientAddress',
-    inputs: [],
-    outputs: [{ name: '', type: 'address', internalType: 'address' }],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
     name: 'rejectPayment',
-    inputs: [{ name: '_paymentId', type: 'uint256', internalType: 'uint256' }],
+    inputs: [
+      {
+        name: '_paymentId',
+        type: 'uint256',
+        internalType: 'uint256',
+      },
+    ],
     outputs: [],
     stateMutability: 'nonpayable',
   },
   {
     type: 'function',
     name: 'removeGuardian',
-    inputs: [{ name: 'oldGuardian', type: 'address', internalType: 'address' }],
+    inputs: [
+      {
+        name: 'oldGuardian',
+        type: 'address',
+        internalType: 'address',
+      },
+    ],
     outputs: [],
     stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    name: 'userGuardians',
+    inputs: [
+      {
+        name: '',
+        type: 'address',
+        internalType: 'address',
+      },
+      {
+        name: '',
+        type: 'uint256',
+        internalType: 'uint256',
+      },
+    ],
+    outputs: [
+      {
+        name: '',
+        type: 'address',
+        internalType: 'address',
+      },
+    ],
+    stateMutability: 'view',
   },
   {
     type: 'event',
@@ -304,6 +511,12 @@ export const blipAbi = [
     name: 'PaymentInitiated',
     inputs: [
       {
+        name: 'paymentId',
+        type: 'uint256',
+        indexed: true,
+        internalType: 'uint256',
+      },
+      {
         name: 'senderAddress',
         type: 'address',
         indexed: true,
@@ -341,6 +554,12 @@ export const blipAbi = [
     name: 'PaymentRefunded',
     inputs: [
       {
+        name: 'paymentId',
+        type: 'uint256',
+        indexed: true,
+        internalType: 'uint256',
+      },
+      {
         name: 'senderAddress',
         type: 'address',
         indexed: false,
@@ -359,6 +578,12 @@ export const blipAbi = [
     type: 'event',
     name: 'PaymentRejected',
     inputs: [
+      {
+        name: 'paymentId',
+        type: 'uint256',
+        indexed: true,
+        internalType: 'uint256',
+      },
       {
         name: 'signerAddress',
         type: 'address',
@@ -379,6 +604,12 @@ export const blipAbi = [
     name: 'PaymentReleased',
     inputs: [
       {
+        name: 'paymentId',
+        type: 'uint256',
+        indexed: true,
+        internalType: 'uint256',
+      },
+      {
         name: 'recipientAddress',
         type: 'address',
         indexed: false,
@@ -398,6 +629,12 @@ export const blipAbi = [
     name: 'PaymentSigned',
     inputs: [
       {
+        name: 'paymentId',
+        type: 'uint256',
+        indexed: true,
+        internalType: 'uint256',
+      },
+      {
         name: 'signerAddress',
         type: 'address',
         indexed: false,
@@ -412,24 +649,95 @@ export const blipAbi = [
     ],
     anonymous: false,
   },
-  { type: 'error', name: 'DirectPaymentsNotAllowed', inputs: [] },
-  { type: 'error', name: 'GuardianAlreadyExist', inputs: [] },
-  { type: 'error', name: 'GuardianAlreadyPending', inputs: [] },
-  { type: 'error', name: 'GuardianDoesNotExist', inputs: [] },
-  { type: 'error', name: 'GuardianNotPending', inputs: [] },
-  { type: 'error', name: 'InsufficientContractBalance', inputs: [] },
-  { type: 'error', name: 'InvalidAddress', inputs: [] },
-  { type: 'error', name: 'InvalidAmount', inputs: [] },
-  { type: 'error', name: 'NoGuardiansSet', inputs: [] },
-  { type: 'error', name: 'NotASigner', inputs: [] },
-  { type: 'error', name: 'NotRecipient', inputs: [] },
-  { type: 'error', name: 'PaymentNotApproved', inputs: [] },
-  { type: 'error', name: 'PaymentNotPending', inputs: [] },
-  { type: 'error', name: 'RecipientCannotBeGuardian', inputs: [] },
+  {
+    type: 'error',
+    name: 'DirectPaymentsNotAllowed',
+    inputs: [],
+  },
+  {
+    type: 'error',
+    name: 'GuardianAlreadyExist',
+    inputs: [],
+  },
+  {
+    type: 'error',
+    name: 'GuardianAlreadyPending',
+    inputs: [],
+  },
+  {
+    type: 'error',
+    name: 'GuardianDoesNotExist',
+    inputs: [],
+  },
+  {
+    type: 'error',
+    name: 'GuardianLimitReached',
+    inputs: [],
+  },
+  {
+    type: 'error',
+    name: 'GuardianNotPending',
+    inputs: [],
+  },
+  {
+    type: 'error',
+    name: 'InsufficientContractBalance',
+    inputs: [],
+  },
+  {
+    type: 'error',
+    name: 'InvalidAddress',
+    inputs: [],
+  },
+  {
+    type: 'error',
+    name: 'InvalidAmount',
+    inputs: [],
+  },
+  {
+    type: 'error',
+    name: 'NoGuardiansSet',
+    inputs: [],
+  },
+  {
+    type: 'error',
+    name: 'NotASigner',
+    inputs: [],
+  },
+  {
+    type: 'error',
+    name: 'NotRecipient',
+    inputs: [],
+  },
+  {
+    type: 'error',
+    name: 'PaymentNotApproved',
+    inputs: [],
+  },
+  {
+    type: 'error',
+    name: 'PaymentNotPending',
+    inputs: [],
+  },
+  {
+    type: 'error',
+    name: 'RecipientCannotBeGuardian',
+    inputs: [],
+  },
   {
     type: 'error',
     name: 'SafeERC20FailedOperation',
-    inputs: [{ name: 'token', type: 'address', internalType: 'address' }],
+    inputs: [
+      {
+        name: 'token',
+        type: 'address',
+        internalType: 'address',
+      },
+    ],
   },
-  { type: 'error', name: 'SignerAlreadyApproved', inputs: [] },
+  {
+    type: 'error',
+    name: 'SignerAlreadyApproved',
+    inputs: [],
+  },
 ] as const;

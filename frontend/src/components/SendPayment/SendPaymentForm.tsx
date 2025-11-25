@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { blipAbi, BLIP_CONTRACT_ADDRESS } from '@/contracts/Blip';
-import { parseEther } from 'viem';
+import { parseEther, Address } from 'viem';
 import { Send, Loader2, CheckCircle } from 'lucide-react';
 
 export function SendPaymentForm() {
   const [amount, setAmount] = useState('');
   const [message, setMessage] = useState('');
+  const [recipient, setRecipient] = useState('');
 
   const { data: hash, writeContract, isPending } = useWriteContract();
   const { isSuccess } = useWaitForTransactionReceipt({ hash });
@@ -18,7 +19,7 @@ export function SendPaymentForm() {
       abi: blipAbi,
       address: BLIP_CONTRACT_ADDRESS,
       functionName: 'initPayment',
-      args: [message],
+      args: [recipient as Address, parseEther(amount), message],
       value: parseEther(amount),
     });
   };
@@ -27,6 +28,7 @@ export function SendPaymentForm() {
     if (isSuccess) {
       setAmount('');
       setMessage('');
+      setRecipient('');
     }
   }, [isSuccess]);
 
@@ -40,6 +42,14 @@ export function SendPaymentForm() {
             onChange={(e) => setAmount(e.target.value)}
             placeholder='0.00'
             className='w-full px-6 py-4 text-2xl font-semibold bg-white dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-white placeholder-gray-400 shadow-lg shadow-gray-200/50 dark:shadow-gray-800/50'
+          />
+
+          <input
+            type='text'
+            value={recipient}
+            onChange={(e) => setRecipient(e.target.value)}
+            placeholder='Recipient address'
+            className='w-full px-6 py-4 bg-white dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-white placeholder-gray-400 shadow-lg shadow-gray-200/50 dark:shadow-gray-800/50'
           />
 
           <input

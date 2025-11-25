@@ -17,7 +17,13 @@ export const blipAbi = [
   {
     type: 'function',
     name: 'acceptGuardianRole',
-    inputs: [],
+    inputs: [
+      {
+        name: 'recipient',
+        type: 'address',
+        internalType: 'address',
+      },
+    ],
     outputs: [],
     stateMutability: 'nonpayable',
   },
@@ -63,7 +69,13 @@ export const blipAbi = [
   {
     type: 'function',
     name: 'declineGuardianRole',
-    inputs: [],
+    inputs: [
+      {
+        name: 'recipient',
+        type: 'address',
+        internalType: 'address',
+      },
+    ],
     outputs: [],
     stateMutability: 'nonpayable',
   },
@@ -113,44 +125,6 @@ export const blipAbi = [
   },
   {
     type: 'function',
-    name: 'guardians',
-    inputs: [
-      {
-        name: '',
-        type: 'uint256',
-        internalType: 'uint256',
-      },
-    ],
-    outputs: [
-      {
-        name: '',
-        type: 'address',
-        internalType: 'address',
-      },
-    ],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    name: 'guardiansMap',
-    inputs: [
-      {
-        name: '',
-        type: 'address',
-        internalType: 'address',
-      },
-    ],
-    outputs: [
-      {
-        name: '',
-        type: 'bool',
-        internalType: 'bool',
-      },
-    ],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
     name: 'hasApproved',
     inputs: [
       {
@@ -178,7 +152,35 @@ export const blipAbi = [
     name: 'initPayment',
     inputs: [
       {
+        name: '_recipient',
+        type: 'address',
+        internalType: 'address',
+      },
+      {
+        name: '_amount',
+        type: 'uint256',
+        internalType: 'uint256',
+      },
+      {
+        name: '_message',
+        type: 'string',
+        internalType: 'string',
+      },
+    ],
+    outputs: [],
+    stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    name: 'initPayment',
+    inputs: [
+      {
         name: '_tokenAddress',
+        type: 'address',
+        internalType: 'address',
+      },
+      {
+        name: '_recipient',
         type: 'address',
         internalType: 'address',
       },
@@ -198,21 +200,38 @@ export const blipAbi = [
   },
   {
     type: 'function',
-    name: 'initPayment',
+    name: 'isGuardian',
     inputs: [
       {
-        name: '_message',
-        type: 'string',
-        internalType: 'string',
+        name: '',
+        type: 'address',
+        internalType: 'address',
+      },
+      {
+        name: '',
+        type: 'address',
+        internalType: 'address',
       },
     ],
-    outputs: [],
-    stateMutability: 'payable',
+    outputs: [
+      {
+        name: '',
+        type: 'bool',
+        internalType: 'bool',
+      },
+    ],
+    stateMutability: 'view',
   },
   {
     type: 'function',
     name: 'leaveGuardianRole',
-    inputs: [],
+    inputs: [
+      {
+        name: 'recipient',
+        type: 'address',
+        internalType: 'address',
+      },
+    ],
     outputs: [],
     stateMutability: 'nonpayable',
   },
@@ -223,8 +242,8 @@ export const blipAbi = [
     outputs: [
       {
         name: '',
-        type: 'uint64',
-        internalType: 'uint64',
+        type: 'uint256',
+        internalType: 'uint256',
       },
     ],
     stateMutability: 'view',
@@ -297,6 +316,11 @@ export const blipAbi = [
         type: 'address',
         internalType: 'address',
       },
+      {
+        name: '',
+        type: 'address',
+        internalType: 'address',
+      },
     ],
     outputs: [
       {
@@ -319,19 +343,6 @@ export const blipAbi = [
     ],
     outputs: [],
     stateMutability: 'nonpayable',
-  },
-  {
-    type: 'function',
-    name: 'recipientAddress',
-    inputs: [],
-    outputs: [
-      {
-        name: '',
-        type: 'address',
-        internalType: 'address',
-      },
-    ],
-    stateMutability: 'view',
   },
   {
     type: 'function',
@@ -358,6 +369,30 @@ export const blipAbi = [
     ],
     outputs: [],
     stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    name: 'userGuardians',
+    inputs: [
+      {
+        name: '',
+        type: 'address',
+        internalType: 'address',
+      },
+      {
+        name: '',
+        type: 'uint256',
+        internalType: 'uint256',
+      },
+    ],
+    outputs: [
+      {
+        name: '',
+        type: 'address',
+        internalType: 'address',
+      },
+    ],
+    stateMutability: 'view',
   },
   {
     type: 'event',
@@ -634,6 +669,11 @@ export const blipAbi = [
   {
     type: 'error',
     name: 'GuardianDoesNotExist',
+    inputs: [],
+  },
+  {
+    type: 'error',
+    name: 'GuardianLimitReached',
     inputs: [],
   },
   {
