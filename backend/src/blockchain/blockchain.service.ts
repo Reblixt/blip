@@ -339,7 +339,7 @@ export class BlockchainService implements OnModuleInit {
             (key, value) =>
               typeof value === 'bigint' ? value.toString() : value,
             2
-          )},Signer - ${JSON.stringify(
+          )}, Signer - ${JSON.stringify(
             signer,
             (key, value) =>
               typeof value === 'bigint' ? value.toString() : value,
@@ -351,64 +351,29 @@ export class BlockchainService implements OnModuleInit {
             2
           )}`
         );
-        await this.paymentsService.approveByContractId(
+
+        const payment = await this.paymentsService.approveByContractId(
           Number(paymentId),
           signer
         );
+
+        const allApprovals = await this.prisma.paymentApprovals.findMany({
+          where: { paymentId: payment.id },
+        });
+
+        const allApproved = allApprovals.every((approval) => approval.approved);
+
+        if (allApproved) {
+          this.logger.debug(
+            `All guardians approved payment ${paymentId}. Releasing...`
+          );
+          await this.paymentsService.releasePayment(Number(paymentId));
+        }
       },
 
       onError: (error) => {
         this.logger.error(
           `Error watching PaymentSigned events: ${error.message}`
-        );
-      },
-    });
-
-    this.viem.watchContractEvent({
-      abi: blipAbi,
-      address: this.BLIP_CONTRACT_ADDRESS,
-      eventName: 'PaymentReleased',
-      onLogs: async (log) => {
-        const paymentId = log[0].args.paymentId;
-        const recipient = log[0].args.recipientAddress;
-        const amount = log[0].args.amount;
-
-        this.logger.debug(
-          `PaymentReleased event detected: paymentId - ${JSON.stringify(
-            paymentId,
-            (key, value) =>
-              typeof value === 'bigint' ? value.toString() : value,
-            2
-          )}, Recipient - ${JSON.stringify(
-            recipient,
-            (key, value) =>
-              typeof value === 'bigint' ? value.toString() : value,
-            2
-          )}, Amount - ${JSON.stringify(
-            amount,
-            (key, value) =>
-              typeof value === 'bigint' ? value.toString() : value,
-            2
-          )}`
-        );
-
-        const payment = await this.prisma.payments.findUnique({
-          where: { contractId: Number(paymentId) },
-        });
-
-        if (!payment) {
-          this.logger.warn(
-            `PaymentReleased: Payment ${paymentId} not found in database yet. Skipping (already handled by PaymentInitiated auto-release).`
-          );
-          return;
-        }
-
-        await this.paymentsService.releasePayment(Number(paymentId));
-      },
-
-      onError: (error) => {
-        this.logger.error(
-          `Error watching PaymentReleased events: ${error.message}`
         );
       },
     });

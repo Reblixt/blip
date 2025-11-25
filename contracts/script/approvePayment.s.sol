@@ -18,7 +18,7 @@ contract ApprovePaymentScript is Script {
         Blip blip = Blip(payable(blipAddress));
         MockERC20 token = MockERC20(tokenAddress);
         
-        uint256 paymentId = 2;
+        uint256 paymentId = 3;
         
         console.log("=================================");
         console.log("Before approval:");
