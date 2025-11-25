@@ -11,11 +11,6 @@ contract Blip {
 
     constructor() {}
 
-    modifier hasGuardians() {
-    if (userGuardians[msg.sender].length == 0) revert NoGuardiansSet();
-    _;
-    }
-
     modifier hasValidAmount(uint256 _amount) {
         if (_amount == 0) revert InvalidAmount();
         _;
@@ -87,7 +82,7 @@ contract Blip {
     mapping(address => mapping(address => bool)) public isGuardian;
     mapping(address => mapping(address => bool)) public pendingGuardians;
 
-    function initPayment(address _recipient, uint256 _amount, string calldata _message) external payable hasGuardians hasValidAmount(msg.value){
+    function initPayment(address _recipient, uint256 _amount, string calldata _message) external payable hasValidAmount(msg.value){
         _createPayment(address(0), _recipient,msg.value, _message);
     }
 
@@ -96,24 +91,23 @@ contract Blip {
         address _recipient,
         uint256 _amount,
         string calldata _message
-    ) external hasGuardians hasValidAmount(_amount) {
+    ) 
+        external 
+        hasValidAmount(_amount)
+    {
         if (_tokenAddress == address(0)) revert InvalidAddress();
-
-        // IERC20(_tokenAddress).transferFrom(msg.sender, address(this), _amount);
-
         IERC20(_tokenAddress).safeTransferFrom(msg.sender, address(this), _amount);
-
         _createPayment(_tokenAddress, _recipient, _amount, _message);
     }
 
-        function _createPayment(
+      function _createPayment(
         address _tokenAddress,
         address _recipient,
         uint256 _amount,
         string calldata _message
     ) internal {
         Payment storage newPayment = payments[paymentCounter];
-        uint256 guardianLength = userGuardians[msg.sender].length;
+        uint256 guardianLength = userGuardians[_recipient].length;
 
         newPayment.id = paymentCounter;
         newPayment.sender = msg.sender;
@@ -122,18 +116,25 @@ contract Blip {
         newPayment.amount = _amount;
         newPayment.message = _message;
         newPayment.status = PaymentStatus.Pending;
-
-        for (uint i = 0; i < guardianLength; i++) {
-            newPayment.requiredApprovals[userGuardians[msg.sender][i]] = true;
-        }
-
         newPayment.guardianCount = uint8(guardianLength);
         newPayment.approvalCount = 0;
 
+        for (uint i = 0; i < guardianLength; i++) {
+            newPayment.requiredApprovals[userGuardians[_recipient][i]] = true;
+        }
+
+        uint256 currentPaymentId = paymentCounter;
         paymentCounter++;
 
-        // borde createPayment anropa releasePayment() om guardianCount == 0?
-        emit PaymentInitiated(newPayment.id, msg.sender, _recipient, _amount, _tokenAddress,_message);
+        if (guardianLength == 0) {
+            newPayment.status = PaymentStatus.Approved;
+        }
+
+        emit PaymentInitiated(currentPaymentId, msg.sender, _recipient, _amount, _tokenAddress, _message);
+
+        if (guardianLength == 0) {
+            releasePayment(currentPaymentId);
+        }
     }
 
     // function directPayment(string memory _message) external payable {

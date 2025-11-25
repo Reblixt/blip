@@ -255,7 +255,7 @@ export class BlockchainService implements OnModuleInit {
             (key, value) =>
               typeof value === 'bigint' ? value.toString() : value,
             2
-          )},Sender - ${JSON.stringify(
+          )}, Sender - ${JSON.stringify(
             sender,
             (key, value) =>
               typeof value === 'bigint' ? value.toString() : value,
@@ -265,26 +265,24 @@ export class BlockchainService implements OnModuleInit {
             (key, value) =>
               typeof value === 'bigint' ? value.toString() : value,
             2
-          )},
           )}, Recipient - ${JSON.stringify(
             recipient,
             (key, value) =>
               typeof value === 'bigint' ? value.toString() : value,
             2
-          )},
           )}, Message - ${JSON.stringify(
             message,
             (key, value) =>
               typeof value === 'bigint' ? value.toString() : value,
             2
-          )},
           )}, TokenAddress - ${JSON.stringify(
             tokenAddress,
             (key, value) =>
               typeof value === 'bigint' ? value.toString() : value,
             2
-          )},`
+          )}`
         );
+
         await this.usersService.upsertUser(sender);
         await this.usersService.upsertUser(recipient);
 
@@ -303,7 +301,20 @@ export class BlockchainService implements OnModuleInit {
           sender,
           Number(paymentId)
         );
-        this;
+
+        const guardianCount = await this.prisma.userGuardians.count({
+          where: {
+            recipientWallet: recipient,
+            status: 'active',
+          },
+        });
+
+        if (guardianCount === 0) {
+          this.logger.debug(
+            `Recipient has no guardians. Auto-releasing payment ${paymentId}`
+          );
+          await this.paymentsService.releasePayment(Number(paymentId));
+        }
       },
 
       onError: (error) => {
@@ -380,6 +391,18 @@ export class BlockchainService implements OnModuleInit {
             2
           )}`
         );
+
+        const payment = await this.prisma.payments.findUnique({
+          where: { contractId: Number(paymentId) },
+        });
+
+        if (!payment) {
+          this.logger.warn(
+            `PaymentReleased: Payment ${paymentId} not found in database yet. Skipping (already handled by PaymentInitiated auto-release).`
+          );
+          return;
+        }
+
         await this.paymentsService.releasePayment(Number(paymentId));
       },
 

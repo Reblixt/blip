@@ -1,8 +1,13 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { UserPlus } from 'lucide-react';
-import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
-import { blipAbi, BLIP_CONTRACT_ADDRESS } from '@/contracts/Blip';
+import {
+  useWriteContract,
+  useWaitForTransactionReceipt,
+  useChainId,
+} from 'wagmi';
+import { blipAbi } from '@/contracts/Blip';
+import { getBlipAddress } from '@/contracts/addresses';
 import { Address } from 'viem';
 
 interface ProposeGuardianInputProps {
@@ -15,9 +20,10 @@ export function ProposeGuardianInput({
   onRefresh,
 }: ProposeGuardianInputProps) {
   const [address, setAddress] = useState('');
+  const chainId = useChainId();
+  const blipAddress = getBlipAddress(chainId);
 
   const { data: hash, writeContract } = useWriteContract();
-
   const { isSuccess } = useWaitForTransactionReceipt({
     hash,
   });
@@ -27,7 +33,7 @@ export function ProposeGuardianInput({
     if (address.trim()) {
       writeContract({
         abi: blipAbi,
-        address: BLIP_CONTRACT_ADDRESS,
+        address: blipAddress,
         functionName: 'proposeGuardian',
         args: [address as Address],
       });

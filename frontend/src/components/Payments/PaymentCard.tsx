@@ -1,11 +1,15 @@
-// components/history/PaymentCard.tsx
 import { Card } from '../UI/Card';
 import { Badge } from '../UI/Badge';
 import { Plus, Minus, Trash2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { formatEther } from 'viem';
-import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
-import { blipAbi, BLIP_CONTRACT_ADDRESS } from '@/contracts/Blip';
+import {
+  useWriteContract,
+  useWaitForTransactionReceipt,
+  useChainId,
+} from 'wagmi';
+import { blipAbi } from '@/contracts/Blip';
+import { getBlipAddress } from '@/contracts/addresses';
 
 interface Payment {
   id: string;
@@ -37,6 +41,8 @@ export function PaymentCard({
   onRefresh,
 }: PaymentCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const chainId = useChainId();
+  const blipAddress = getBlipAddress(chainId);
 
   const isIncoming = payment.recipientWallet === currentUserWallet;
   const otherParty = isIncoming
@@ -61,10 +67,11 @@ export function PaymentCard({
       }, 1000);
     }
   }, [isSuccess, onRefresh]);
+
   const handleCancelPayment = () => {
     writeContract({
       abi: blipAbi,
-      address: BLIP_CONTRACT_ADDRESS,
+      address: blipAddress,
       functionName: 'cancelPendingPayment',
       args: [BigInt(payment.contractId)],
     });

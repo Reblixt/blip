@@ -3,8 +3,13 @@ import { Card } from '../UI/Card';
 import { Badge } from '../UI/Badge';
 import { Trash2 } from 'lucide-react';
 import { Address } from 'viem';
-import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
-import { blipAbi, BLIP_CONTRACT_ADDRESS } from '@/contracts/Blip';
+import {
+  useWriteContract,
+  useWaitForTransactionReceipt,
+  useChainId,
+} from 'wagmi';
+import { blipAbi } from '@/contracts/Blip';
+import { getBlipAddress } from '@/contracts/addresses';
 import { useEffect } from 'react';
 
 interface Guardian {
@@ -26,10 +31,14 @@ export function GuardianCard({
   onDelete,
   onRefresh,
 }: GuardianCardProps) {
+  const chainId = useChainId();
+  const blipAddress = getBlipAddress(chainId);
+
   const { data: hash, writeContract } = useWriteContract();
   const { isSuccess } = useWaitForTransactionReceipt({
     hash,
   });
+
   useEffect(() => {
     if (isSuccess && onRefresh) {
       setTimeout(() => {
@@ -41,7 +50,7 @@ export function GuardianCard({
   const handleCancelGuardianProposal = (guardian: Guardian) => {
     writeContract({
       abi: blipAbi,
-      address: BLIP_CONTRACT_ADDRESS,
+      address: blipAddress,
       functionName: 'cancelGuardianProposal',
       args: [guardian.guardianWallet as Address],
     });
