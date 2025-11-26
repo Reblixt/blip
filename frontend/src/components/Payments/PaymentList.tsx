@@ -22,16 +22,17 @@ interface PaymentListProps {
   payments: Payment[];
   currentUserWallet: string;
   onRefresh: () => void;
+  variant: 'history' | 'protecting';
 }
 
 export function PaymentList({
   payments,
   currentUserWallet,
   onRefresh,
+  variant,
 }: PaymentListProps) {
   return (
     <div className='p-4 pb-32'>
-      <h1 className='text-2xl font-bold mb-4'>History</h1>
       <div className='space-y-4'>
         {payments.map((payment) => (
           <PaymentCard
@@ -39,6 +40,7 @@ export function PaymentList({
             payment={payment}
             currentUserWallet={currentUserWallet}
             onRefresh={onRefresh}
+            variant={variant}
           />
         ))}
       </div>

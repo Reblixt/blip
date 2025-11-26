@@ -1,6 +1,6 @@
 import { Card } from '../UI/Card';
 import { Badge } from '../UI/Badge';
-import { Plus, Minus, Trash2 } from 'lucide-react';
+import { Plus, Minus, Trash2, Check, X } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { formatEther } from 'viem';
 import {
@@ -33,12 +33,14 @@ interface PaymentCardProps {
   payment: Payment;
   currentUserWallet: string;
   onRefresh: () => void;
+  variant: 'history' | 'protecting';
 }
 
 export function PaymentCard({
   payment,
   currentUserWallet,
   onRefresh,
+  variant,
 }: PaymentCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const chainId = useChainId();
@@ -73,6 +75,26 @@ export function PaymentCard({
       abi: blipAbi,
       address: blipAddress,
       functionName: 'cancelPendingPayment',
+      args: [BigInt(payment.contractId)],
+    });
+  };
+
+  const handleAcceptPayment = () => {
+    console.log('Accept payment:', payment.id);
+    writeContract({
+      abi: blipAbi,
+      address: blipAddress,
+      functionName: 'approvePayment',
+      args: [BigInt(payment.contractId)],
+    });
+  };
+
+  const handleDeclinePayment = () => {
+    console.log('Decline payment:', payment.id);
+    writeContract({
+      abi: blipAbi,
+      address: blipAddress,
+      functionName: 'rejectPayment',
       args: [BigInt(payment.contractId)],
     });
   };
@@ -121,10 +143,37 @@ export function PaymentCard({
 
   return (
     <Card>
-      <div className='flex justify-between items-center'>
-        <span className='font-mono text-sm'>{shortenAddress(otherParty)}</span>
-        <Badge status={payment.status} />
-      </div>
+      {variant === 'history' ? (
+        <div className='flex justify-between items-center'>
+          <div>
+            <p className='text-xs text-gray-500 dark:text-gray-400 mb-1'>
+              From:
+            </p>
+            <span className='font-mono text-sm'>
+              {shortenAddress(otherParty)}
+            </span>
+          </div>
+          <Badge status={payment.status} />
+        </div>
+      ) : (
+        <div className='flex justify-between items-start'>
+          <div className='space-y-2'>
+            <div>
+              <p className='text-xs text-gray-500 dark:text-gray-400'>From:</p>
+              <span className='font-mono text-sm'>
+                {shortenAddress(payment.senderWallet)}
+              </span>
+            </div>
+            <div>
+              <p className='text-xs text-gray-500 dark:text-gray-400'>To:</p>
+              <span className='font-mono text-sm'>
+                {shortenAddress(payment.recipientWallet)}
+              </span>
+            </div>
+          </div>
+          <Badge status={payment.status} />
+        </div>
+      )}
 
       <div className='flex justify-between items-center mt-2'>
         <p className='text-sm text-gray-600 dark:text-gray-400'>
@@ -137,14 +186,45 @@ export function PaymentCard({
       </div>
 
       <div className='flex justify-between items-center mt-2'>
-        <button
-          onClick={handleCancelPayment}
-          className='transition-colors duration-200'>
-          <Trash2
-            size={18}
-            className='text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-600'
-          />
-        </button>
+        {variant === 'history' ? (
+          <button
+            onClick={handleCancelPayment}
+            className='transition-colors duration-200'>
+            <Trash2
+              size={18}
+              className='text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-600'
+            />
+          </button>
+        ) : (
+          <div className='flex gap-2'>
+            {payment.status === 'pending' ? (
+              <>
+                <button
+                  onClick={handleAcceptPayment}
+                  className='transition-colors duration-200'>
+                  <Check
+                    size={18}
+                    className='text-green-500 hover:text-green-700 dark:text-green-400 dark:hover:text-green-600'
+                  />
+                </button>
+                <button
+                  onClick={handleDeclinePayment}
+                  className='transition-colors duration-200'>
+                  <X
+                    size={18}
+                    className='text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-600'
+                  />
+                </button>
+              </>
+            ) : (
+              <div className='text-sm text-gray-500 dark:text-gray-400'>
+                {payment.status === 'approved' || payment.status === 'released'
+                  ? 'Approved'
+                  : 'Declined'}
+              </div>
+            )}
+          </div>
+        )}
 
         <button
           onClick={() => setIsExpanded(!isExpanded)}

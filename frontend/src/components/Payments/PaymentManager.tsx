@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { PaymentList } from './PaymentList';
+import { PaymentTabs } from './PaymentTabs';
 import { ShowPaymentsButton } from './ShowPaymentsButton';
 
 interface Payment {
@@ -21,7 +21,9 @@ interface PaymentApprovals {
   approved: boolean;
 }
 
-const RECIPIENT_ALICE_ADDRESS = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
+const BOB_ADDRESS = process.env.NEXT_PUBLIC_BOB_ADDRESS!;
+const ALICE_ADDRESS = process.env.NEXT_PUBLIC_ALICE_ADDRESS!;
+const CHARLIE_ADDRESS = process.env.NEXT_PUBLIC_CHARLIE_ADDRESS!;
 const BACKEND_URL = 'http://localhost:3001';
 
 export default function PaymentManager() {
@@ -33,9 +35,7 @@ export default function PaymentManager() {
   };
 
   async function fetchPayments() {
-    const response = await fetch(
-      `${BACKEND_URL}/payments?recipientWallet=${RECIPIENT_ALICE_ADDRESS}`
-    );
+    const response = await fetch(`${BACKEND_URL}/payments`);
     const data = await response.json();
     setPayments(data);
   }
@@ -53,9 +53,9 @@ export default function PaymentManager() {
   return (
     <>
       {isListVisible ? (
-        <PaymentList
+        <PaymentTabs
           payments={payments}
-          currentUserWallet={RECIPIENT_ALICE_ADDRESS}
+          currentUserWallet={BOB_ADDRESS}
           onRefresh={handleRefresh}
         />
       ) : (
