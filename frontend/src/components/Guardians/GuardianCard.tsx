@@ -1,60 +1,43 @@
-// components/Guardians/GuardianCard.tsx
 import { Card } from '../UI/Card';
 import { Badge } from '../UI/Badge';
-import { Trash2 } from 'lucide-react';
-import { Address } from 'viem';
-import {
-  useWriteContract,
-  useWaitForTransactionReceipt,
-  useChainId,
-} from 'wagmi';
-import { blipAbi } from '@/contracts/Blip';
-import { getBlipAddress } from '@/contracts/addresses';
+import { Trash2, Check, X, DoorOpen } from 'lucide-react';
+import { useWaitForTransactionReceipt } from 'wagmi';
 import { useEffect } from 'react';
-
-interface Guardian {
-  id: string;
-  recipientWallet: string;
-  guardianWallet: string;
-  status: string;
-  createdAt: string;
-}
+import { Guardian, useGuardian } from '@/hooks/useGuardian';
 
 interface GuardianCardProps {
   guardian: Guardian;
-  onRefresh?: () => void;
-  onDelete?: (guardianWallet: string) => void;
+  onRefresh: () => void;
+  onDelete: (guardianWallet: string) => void;
+  variant: 'guardians' | 'protecting';
 }
 
 export function GuardianCard({
   guardian,
-  onDelete,
   onRefresh,
+  onDelete,
+  variant,
 }: GuardianCardProps) {
-  const chainId = useChainId();
-  const blipAddress = getBlipAddress(chainId);
+  const {
+    handleAcceptGuardianRole,
+    handleCancelGuardianProposal,
+    handleDeclineGuardianRole,
+    handleLeaveGuardianRole,
+    handleRemoveGuardian,
+    hash,
+  } = useGuardian(guardian);
 
-  const { data: hash, writeContract } = useWriteContract();
   const { isSuccess } = useWaitForTransactionReceipt({
     hash,
   });
 
   useEffect(() => {
-    if (isSuccess && onRefresh) {
+    if (isSuccess) {
       setTimeout(() => {
         onRefresh();
       }, 1000);
     }
   }, [isSuccess, onRefresh]);
-
-  const handleCancelGuardianProposal = (guardian: Guardian) => {
-    writeContract({
-      abi: blipAbi,
-      address: blipAddress,
-      functionName: 'cancelGuardianProposal',
-      args: [guardian.guardianWallet as Address],
-    });
-  };
 
   const shortenAddress = (address: string) => {
     const first = address.slice(0, 6);
@@ -72,29 +55,97 @@ export function GuardianCard({
   };
 
   const getStatusText = (status: string, date: string) => {
-    switch (status) {
-      case 'active':
-        return `Guardian since ${formatDate(date)}`;
-      case 'pending':
-        return 'Invitation sent';
-      case 'declined':
-        return 'Invitation declined';
-      case 'cancelled':
-        return 'Invitation cancelled';
-      case 'removed':
-        return 'Removed as guardian';
-      case 'left':
-        return 'Left guardian role';
-      default:
-        return 'Status unknown';
+    if (variant === 'guardians') {
+      switch (status) {
+        case 'active':
+          return `Guardian since ${formatDate(date)}`;
+        case 'pending':
+          return 'Invitation sent';
+        default:
+          return 'Status unknown';
+      }
+    } else {
+      switch (status) {
+        case 'active':
+          return `Protecting since ${formatDate(date)}`;
+        case 'pending':
+          return 'Invitation received';
+        default:
+          return 'Status unknown';
+      }
     }
+  };
+
+  const renderButtons = () => {
+    if (variant === 'guardians') {
+      if (guardian.status === 'pending') {
+        return (
+          <button
+            onClick={handleCancelGuardianProposal}
+            className='transition-colors duration-200'>
+            <Trash2
+              size={18}
+              className='text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-600'
+            />
+          </button>
+        );
+      } else if (guardian.status === 'active') {
+        return (
+          <button
+            onClick={handleRemoveGuardian}
+            className='transition-colors duration-200'>
+            <Trash2
+              size={18}
+              className='text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-600'
+            />
+          </button>
+        );
+      }
+    } else {
+      if (guardian.status === 'pending') {
+        return (
+          <div className='flex gap-2'>
+            <button
+              onClick={handleAcceptGuardianRole}
+              className='transition-colors duration-200'>
+              <Check
+                size={18}
+                className='text-green-500 hover:text-green-700 dark:text-green-400 dark:hover:text-green-600'
+              />
+            </button>
+            <button
+              onClick={handleDeclineGuardianRole}
+              className='transition-colors duration-200'>
+              <X
+                size={18}
+                className='text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-600'
+              />
+            </button>
+          </div>
+        );
+      } else if (guardian.status === 'active') {
+        return (
+          <button
+            onClick={handleLeaveGuardianRole}
+            className='transition-colors duration-200'>
+            <DoorOpen
+              size={18}
+              className='text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-600'
+            />
+          </button>
+        );
+      }
+    }
+    return null;
   };
 
   return (
     <Card className='mb-4'>
       <div className='flex justify-between items-center'>
         <span className='font-mono text-sm'>
-          {shortenAddress(guardian.guardianWallet)}
+          {variant === 'guardians'
+            ? shortenAddress(guardian.guardianWallet)
+            : shortenAddress(guardian.recipientWallet)}
         </span>
         <Badge status={guardian.status} />
       </div>
@@ -104,14 +155,7 @@ export function GuardianCard({
           {getStatusText(guardian.status, guardian.createdAt)}
         </p>
 
-        <button
-          onClick={() => handleCancelGuardianProposal(guardian)}
-          className='transition-colors duration-200 ml-2'>
-          <Trash2
-            size={18}
-            className='text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-600'
-          />
-        </button>
+        {renderButtons()}
       </div>
     </Card>
   );
