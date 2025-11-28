@@ -175,6 +175,10 @@ export class UsersService {
     return user;
   }
 
+  async getAllGuardianRelations() {
+    return this.prisma.userGuardians.findMany();
+  }
+
   async acceptGuardianRole(guardianRelationId: string) {
     return await this.prisma.userGuardians.update({
       where: { id: guardianRelationId },
