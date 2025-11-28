@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { GuardianList } from './GuardianList';
+import { GuardianTabs } from './GuardianTabs';
 import { ProposeGuardianButton } from './ProposeGuardianButton';
 import { ProposeGuardianInput } from './ProposeGuardianInput';
 import { ShowGuardiansButton } from './ShowGuardiansButton';
@@ -25,9 +25,7 @@ export default function GuardianManager() {
   };
 
   async function fetchGuardians() {
-    const response = await fetch(
-      `http://localhost:3001/users/${RECIPIENT_ALICE_ADDRESS}/guardians`
-    );
+    const response = await fetch('http://localhost:3001/users/guardians/all');
     const data = await response.json();
     setGuardians(data);
   }
@@ -60,9 +58,9 @@ export default function GuardianManager() {
         <ShowGuardiansButton onClick={handleShowGuardians} />
       ) : (
         <>
-          <GuardianList
+          <GuardianTabs
             guardians={guardians}
-            onDelete={handleDelete}
+            currentUserWallet={RECIPIENT_ALICE_ADDRESS}
             onRefresh={handleRefresh}
           />
           {isInputOpen ? (
